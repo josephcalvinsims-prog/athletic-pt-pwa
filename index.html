@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+  />
+  <title>Apex Autoreg PT — Spine, Cuff &amp; Performance OS</title>
+  <meta
+    name="description"
+    content="Mobile-first physical therapy autoregulation, C5-C7 &amp; rotator cuff clinical guardrails, streak tracking, and Cross Gates athletic performance PWA."
+  />
+
+  <!-- PWA & iOS Full-Screen Standalone Meta Tags -->
+  <meta name="theme-color" content="#020617" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Autoreg PT" />
+  <meta name="format-detection" content="telephone=no" />
+
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="./icons/icon.svg" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+
+  <!-- Tailwind CSS via CDN (Zero-Build Architecture) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Display', 'Inter', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Chart.js via CDN for Mobile Trend Visualizers -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" defer></script>
+
+  <!-- Custom Athletic & Safe-Area Styling -->
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+
+<body class="bg-slate-950 text-slate-100 antialiased selection:bg-emerald-500/30 athletic-shell">
+  <!-- Sticky Top App Header -->
+  <header class="sticky top-0 z-30 bg-slate-950/90 backdrop-blur-xl border-b border-slate-800/80 pt-safe">
+    <div class="max-w-xl mx-auto px-4 py-2.5 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div class="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 shadow-inner">
+          <svg class="w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18M8 6h8M7 10h10M7 14h10M8 18h8" />
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <h1 class="text-sm font-extrabold tracking-tight text-slate-100 truncate">APEX AUTOREG PT</h1>
+            <span id="headerDateLabel" class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">TODAY</span>
+          </div>
+          <p class="text-[11px] text-slate-400 truncate">C5-C7 • Occipital • Bilateral Cuff/Labrum OS</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 shrink-0">
+        <span
+          id="headerAutoSaveBadge"
+          class="text-[11px] font-medium text-emerald-400/90 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900/90 border border-slate-800 transition-opacity duration-300"
+          title="Optimistic auto-save to IndexedDB"
+        >
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          <span>Saved</span>
+        </span>
+        <button
+          id="installPwaBtn"
+          type="button"
+          class="hidden px-2.5 py-1.5 rounded-lg bg-sky-500/15 border border-sky-400/40 text-sky-300 text-[11px] font-bold"
+        >
+          Install
+        </button>
+        <button
+          id="headerReadinessPill"
+          type="button"
+          class="px-2.5 py-1.5 rounded-full text-[11px] font-bold tracking-wide border bg-emerald-500/15 text-emerald-300 border-emerald-500/40 flex items-center gap-1.5 active:scale-95 transition"
+          title="Jump to Daily Check-In"
+        >
+          <span id="headerReadinessDot" class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span id="headerReadinessText">GREEN READY</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Viewport Content Container -->
+  <main class="max-w-xl mx-auto px-4 pt-4 pb-safe-nav space-y-5">
+
+    <!-- ===================================================================
+         TAB 1: DASHBOARD & STREAK ENGINE
+         =================================================================== -->
+    <section id="tab-dashboard" class="tab-panel active space-y-5" aria-label="Dashboard and Streak Engine">
+
+      <!-- Streak Rings & Daily Pillars Card -->
+      <div class="rounded-2xl bg-slate-900/90 border border-slate-800/90 p-4 shadow-lg">
+        <div class="flex items-center justify-between mb-3.5">
+          <div>
+            <h2 class="text-sm font-bold text-slate-100 tracking-tight">Daily Non-Negotiable Streaks</h2>
+            <p class="text-xs text-slate-400">Tap any ring to toggle today's completion</p>
+          </div>
+          <button
+            id="openBaselineSettingsBtn"
+            type="button"
+            class="text-[11px] font-semibold text-sky-400 hover:text-sky-300 px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700/70 active:scale-95 transition"
+          >
+            Baselines
+          </button>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2.5">
+          <!-- Pillar 1: 10,000+ Daily Steps -->
+          <button
+            id="toggleStepsBtn"
+            type="button"
+            class="group rounded-xl bg-slate-950/75 border border-slate-800/90 p-3 flex flex-col items-center text-center active:scale-95 transition focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+          >
+            <div class="relative w-20 h-20 flex items-center justify-center mb-1.5">
+              <svg class="w-20 h-20" viewBox="0 0 80 80">
+                <circle cx="40" cy="40" r="32" fill="none" stroke="#1e293b" stroke-width="6"></circle>
+                <circle
+                  id="ringStepsCircle"
+                  class="progress-ring-circle"
+                  cx="40"
+                  cy="40"
+                  r="32"
+                  fill="none"
+                  stroke="#10b981"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                  stroke-dasharray="201.06"
+                  stroke-dashoffset="201.06"
+                ></circle>
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <span id="streakStepsCount" class="text-base font-extrabold text-white leading-none">0</span>
+                <span class="text-[9px] uppercase tracking-wider text-slate-400 mt-0.5">Days</span>
+              </div>
+            </div>
+            <span class="text-xs font-bold text-slate-100 leading-tight">10k+ Steps</span>
+            <span id="streakStepsBadge" class="mt-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-slate-800 text-slate-400">
+              Pending
+            </span>
+          </button>
+
+          <!-- Pillar 2: Daily Journaling -->
+          <button
+            id="toggleJournalBtn"
+            type="button"
+            class="group rounded-xl bg-slate-950/75 border border-slate-800/90 p-3 flex flex-col items-center text-center active:scale-95 transition focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+          >
+            <div class="relative w-20 h-20 flex items-center justify-center mb-1.5">
+              <svg class="w-20 h-20" viewBox="0 0 80 80">
+                <circle cx="40" cy="40" r="32" fill="none" stroke="#1e293b" stroke-width="6"></circle>
+                <circle
+                  id="ringJournalCircle"
+                  class="progress-ring-circle"
+                  cx="40"
+                  cy="40"
+                  r="32"
+                  fill="none"
+                  stroke="#38bdf8"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                  stroke-dasharray="201.06"
+                  stroke-dashoffset="201.06"
+                ></circle>
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <span id="streakJournalCount" class="text-base font-extrabold text-white leading-none">0</span>
+                <span class="text-[9px] uppercase tracking-wider text-slate-400 mt-0.5">Days</span>
+              </div>
+            </div>
+            <span class="text-xs font-bold text-slate-100 leading-tight">Daily Journal</span>
+            <span id="streakJournalBadge" class="mt-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-slate-800 text-slate-400">
+              Pending
+            </span>
+          </button>
+
+          <!-- Pillar 3: Tier 1 Daily Anchor -->
+          <button
+            id="toggleAnchorBtn"
+            type="button"
+            class="group rounded-xl bg-slate-950/75 border border-slate-800/90 p-3 flex flex-col items-center text-center active:scale-95 transition focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+          >
+            <div class="relative w-20 h-20 flex items-center justify-center mb-1.5">
+              <svg class="w-20 h-20" viewBox="0 0 80 80">
+                <circle cx="40" cy="40" r="32" fill="none" stroke="#1e293b" stroke-width="6"></circle>
+                <circle
+                  id="ringAnchorCircle"
+                  class="progress-ring-circle"
+                  cx="40"
+                  cy="40"
+                  r="32"
+                  fill="none"
+                  stroke="#10b981"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                  stroke-dasharray="201.06"
+                  stroke-dashoffset="201.06"
+                ></circle>
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <span id="streakAnchorCount" class="text-base font-extrabold text-white leading-none">0</span>
+                <span class="text-[9px] uppercase tracking-wider text-slate-400 mt-0.5">Days</span>
+              </div>
+            </div>
+            <span class="text-xs font-bold text-slate-100 leading-tight">Tier 1 Anchor</span>
+            <span id="streakAnchorBadge" class="mt-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-slate-800 text-slate-400">
+              Pending
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 48-Hour Post-Massage / Bodywork Recovery Tracker -->
+      <div id="bodyworkCard" class="rounded-2xl bg-slate-900/90 border border-slate-800/90 p-4 shadow-lg">
+        <div class="flex items-center justify-between gap-2 mb-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-extrabold uppercase tracking-wider text-amber-400">48h Post-Bodywork Protocol</span>
+            </div>
+            <p class="text-xs text-slate-400">Myofascial flush &amp; neuroplasticity countdown</p>
+          </div>
+          <button
+            id="openBodyworkModalBtn"
+            type="button"
+            class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-100 active:scale-95 transition shrink-0"
+          >
+            + Log Bodywork
+          </button>
+        </div>
+
+        <!-- Inline Bodywork Logging Drawer -->
+        <div id="bodyworkFormPanel" class="hidden mb-4 p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
+          <div>
+            <label for="bodyworkModalitySelect" class="block text-xs font-semibold text-slate-300 mb-1">Modality</label>
+            <select
+              id="bodyworkModalitySelect"
+              class="w-full rounded-xl bg-slate-900 border border-slate-700 px-3 py-2.5 text-slate-100 focus:outline-none focus:border-emerald-500"
+            >
+              <option value="Deep Myofascial & Suboccipital Release">Deep Myofascial &amp; Suboccipital Release</option>
+              <option value="Sports Massage (Cervical & Interscapular)">Sports Massage (Cervical &amp; Interscapular)</option>
+              <option value="Manual Physical Therapy & Mobilization">Manual Physical Therapy &amp; Mobilization</option>
+              <option value="Trigger Point / Dry Needling Release">Trigger Point / Dry Needling Release</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="bodyworkOffsetSelect" class="block text-xs font-semibold text-slate-300 mb-1">Session Completion Time</label>
+            <select
+              id="bodyworkOffsetSelect"
+              class="w-full rounded-xl bg-slate-900 border border-slate-700 px-3 py-2.5 text-slate-100 focus:outline-none focus:border-emerald-500"
+            >
+              <option value="0">Just finished now (Starts Hour 0 — Phase 1)</option>
+              <option value="2">2 hours ago (Phase 1: Flush &amp; Reset)</option>
+              <option value="12">12 hours ago (Mid-Phase 1)</option>
+              <option value="26">26 hours ago (Phase 2: Neuroplastic Window)</option>
+              <option value="custom">Custom Date &amp; Time…</option>
+            </select>
+          </div>
+
+          <div id="bodyworkCustomTimeWrapper" class="hidden">
+            <label for="bodyworkCustomTimeInput" class="block text-xs font-semibold text-slate-300 mb-1">Exact Finish Time</label>
+            <input
+              id="bodyworkCustomTimeInput"
+              type="datetime-local"
+              class="w-full rounded-xl bg-slate-900 border border-slate-700 px-3 py-2.5 text-slate-100 focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+
+          <div>
+            <label for="bodyworkNotesInput" class="block text-xs font-semibold text-slate-300 mb-1">Tissue Response Notes (Optional)</label>
+            <input
+              id="bodyworkNotesInput"
+              type="text"
+              placeholder="e.g., Left levator &amp; rhomboid guarding released well"
+              class="w-full rounded-xl bg-slate-900 border border-slate-700 px-3 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+
+          <div class="flex items-center gap-2 pt-1">
+            <button
+              id="saveBodyworkBtn"
+              type="button"
+              class="flex-1 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm active:scale-98 transition"
+            >
+              Start 48h Countdown
+            </button>
+            <button
+              id="cancelBodyworkBtn"
+              type="button"
+              class="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-300 font-semibold text-sm active:scale-95 transition"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+
+        <!-- Active 48-Hour Countdown State -->
+        <div id="bodyworkActiveContainer" class="hidden space-y-3">
+          <div class="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800 flex items-center justify-between gap-3">
+            <div>
+              <span
+                id="bodyworkPhaseBadge"
+                class="inline-block px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/40"
+              >
+                PHASE 1 • HOURS 0–24
+              </span>
+              <h3 id="bodyworkPhaseTitle" class="text-sm font-bold text-white mt-1">
+                Flush &amp; Parasympathetic Reset
+              </h3>
+              <p id="bodyworkModalityLabel" class="text-[11px] text-slate-400"></p>
+            </div>
+            <div class="text-right shrink-0">
+              <div class="text-[10px] uppercase tracking-wider text-slate-400">Phase Remaining</div>
+              <div id="bodyworkCountdownClock" class="font-mono text-xl font-extrabold text-amber-400 tracking-tight">
+                24:00:00
+              </div>
+            </div>
+          </div>
+
+          <!-- 48h Timeline Bar with 24h Phase Divider -->
+          <div>
+            <div class="flex justify-between text-[10px] font-semibold text-slate-400 mb-1">
+              <span>0h (Flush)</span>
+              <span>24h (Neuroplastic Shift)</span>
+              <span>48h (Resolved)</span>
+            </div>
+            <div class="relative h-2.5 rounded-full bg-slate-800 overflow-hidden">
+              <div class="absolute left-1/2 top-0 bottom-0 w-0.5 bg-slate-500 z-10"></div>
+              <div
+                id="bodyworkProgressBar"
+                class="h-full bg-gradient-to-r from-amber-500 to-emerald-400 transition-all duration-500"
+                style="width: 15%"
+              ></div>
+            </div>
+          </div>
+
+          <p id="bodyworkHeadline" class="text-xs font-medium text-slate-200"></p>
+          <ul id="bodyworkGuidelinesList" class="space-y-1.5 text-xs text-slate-300"></ul>
+        </div>
+
+        <!-- Inactive State -->
+        <div id="bodyworkInactiveContainer" class="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 text-xs text-slate-400">
+          <p id="bodyworkLastSummary">
+            Log massage or manual therapy to activate the 48-hour recovery &amp; neuroplasticity tracker.
+          </p>
+        </div>
+      </div>
+
+      <!-- Daily Check-In & Traffic Light Autoregulation Card -->
+      <div id="checkinCardShell" class="rounded-2xl bg-slate-900/95 border border-slate-800 p-4 space-y-4 transition-shadow duration-300 glow-green">
+        <div class="flex items-start justify-between gap-2">
+          <div>
+            <h2 class="text-base font-extrabold text-white tracking-tight">Daily Clinical Check-In</h2>
+            <p class="text-xs text-slate-400">Autoregulates Cross Gates loading &amp; C5-C7 / cuff guardrails</p>
+          </div>
+          <span id="checkinSavedIndicator" class="text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-md">
+            Live
+          </span>
+        </div>
+
+        <!-- Symptom 1: Scalp Pressure ("Tight Hat" / Occipital Neuralgia) -->
+        <div class="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800/90 space-y-3">
+          <div class="flex items-center justify-between gap-2">
+            <div>
+              <label class="text-xs font-bold text-slate-100 block">
+                Scalp Pressure ("Tight Hat" Sensation)
+              </label>
+              <span class="text-[11px] text-slate-400">Cervico-occipital fascia &amp; nerve tension</span>
+            </div>
+            <span
+              id="scalpValueBadge"
+              class="min-w-[4.25rem] text-center px-2.5 py-1 rounded-xl text-xs font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+            >
+              2 / 10 • Calm
+            </span>
+          </div>
+
+          <!-- Tactile Stepper & 3-Zone Segmented Pill Bar -->
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              id="scalpMinusBtn"
+              class="tactile-stepper-btn rounded-xl bg-slate-900 active:bg-slate-800 hover:bg-slate-800/90 border border-slate-700/80 text-xl font-bold text-slate-200 shrink-0 active:scale-90 transition shadow-sm"
+              aria-label="Decrease Scalp Pressure"
+            >
+              −
+            </button>
+            <div class="flex-1 grid grid-cols-3 gap-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800 select-none">
+              <button
+                type="button"
+                data-symptom="scalp"
+                data-zone="calm"
+                class="zone-pill-btn py-2 px-1 rounded-lg text-center font-bold text-xs border border-transparent transition active:scale-95 flex flex-col items-center justify-center gap-0.5"
+              >
+                <span class="text-[11px] leading-tight">Calm</span>
+                <span class="text-[9px] font-mono opacity-80">0–3</span>
+              </button>
+              <button
+                type="button"
+                data-symptom="scalp"
+                data-zone="caution"
+                class="zone-pill-btn py-2 px-1 rounded-lg text-center font-bold text-xs border border-transparent transition active:scale-95 flex flex-col items-center justify-center gap-0.5"
+              >
+                <span class="text-[11px] leading-tight">Caution</span>
+                <span class="text-[9px] font-mono opacity-80">4–6</span>
+              </button>
+              <button
+                type="button"
+                data-symptom="scalp"
+                data-zone="flare"
+                class="zone-pill-btn py-2 px-1 rounded-lg text-center font-bold text-xs border border-transparent transition active:scale-95 flex flex-col items-center justify-center gap-0.5"
+              >
+                <span class="text-[11px] leading-tight">Flare</span>
+                <span class="text-[9px] font-mono opacity-80">7–10</span>
+              </button>
+            </div>
+            <button
+              type="button"
+              id="scalpPlusBtn"
+              class="tactile-stepper-btn rounded-xl bg-slate-900 active:bg-slate-800 hover:bg-slate-800/90 border border-slate-700/80 text-xl font-bold text-slate-200 shrink-0 active:scale-90 transition shadow-sm"
+              aria-label="Increase Scalp Pressure"
+            >
+              +
+            </button>
+          </div>
+          <!-- Hidden range input for backwards compatibility & tests -->
+          <input id="scalpSlider" type="range" min="0" max="10" step="1" value="2" class="hidden" />
+        </div>
+
+        <!-- Symptom 2: Levator Scapulae Tension -->
+        <div class="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800/90 space-y-3">
+          <div class="flex items-center justify-between gap-2">
+            <div>
+              <label class="text-xs font-bold text-slate-100 block">
+                Levator Scapulae Tension
+              </label>
+              <span class="text-[11px] text-slate-400">Upper cervical-scapular angle &amp; neck pull</span>
+            </div>
+            <span
+              id="levatorValueBadge"
+              class="min-w-[4.25rem] text-center px-2.5 py-1 rounded-xl text-xs font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+            >
+              2 / 10 • Calm
+            </span>
+          </div>
+
+          <!-- Tactile Stepper & 3-Zone Segmented Pill Bar -->
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              id="levatorMinusBtn"
+              class="tactile-stepper-btn rounded-xl bg-slate-900 active:bg-slate-800 hover:bg-slate-800/90 border border-slate-700/80 text-xl font-bold text-slate-200 shrink-0 active:scale-90 transition shadow-sm"
+              aria-label="Decrease Levator Tension"
+            >
+              −
+            </button>
+            <div class="flex-1 grid grid-cols-3 gap-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800 select-none">
+              <button
+                type="button"
+                data-symptom="levator"
+                data-zone="calm"
+                class="zone-pill-btn py-2 px-1 rounded-lg text-center font-bold text-xs border border-transparent transition active:scale-95 flex flex-col items-center justify-center gap-0.5"
+              >
+                <span class="text-[11px] leading-tight">Calm</span>
+                <span class="text-[9px] font-mono opacity-80">0–3</span>
+              </button>
+              <button
+                type="button"
+                data-symptom="levator"
+                data-zone="caution"
+                class="zone-pill-btn py-2 px-1 rounded-lg text-center font-bold text-xs border border-transparent transition active:scale-95 flex flex-col items-center justify-center gap-0.5"
+              >
+                <span class="text-[11px] leading-tight">Caution</span>
+                <span class="text-[9px] font-mono opacity-80">4–6</span>
+              </button>
+              <button
+                type="button"
+                data-symptom="levator"
+                data-zone="flare"
+                class="zone-pill-btn py-2 px-1 rounded-lg text-center font-bold text-xs border border-transparent transition active:scale-95 flex flex-col items-center justify-center gap-0.5"
+              >
+                <span class="text-[11px] leading-tight">Flare</span>
+                <span class="text-[9px] font-mono opacity-80">7–10</span>
+              </button>
+            </div>
+            <button
+              type="button"
+              id="levatorPlusBtn"
+              class="tactile-stepper-btn rounded-xl bg-slate-900 active:bg-slate-800 hover:bg-slate-800/90 border border-slate-700/80 text-xl font-bold text-slate-200 shrink-0 active:scale-90 transition shadow-sm"
+              aria-label="Increase Levator Tension"
+            >
+              +
+            </button>
+          </div>
+          <!-- Hidden range input for backwards compatibility -->
+          <input id="levatorSlider" type="range" min="0" max="10" step="1" value="2" class="hidden" />
+        </div>
+
+        <!-- Symptom 3: Interscapular Soreness (Rhomboid & Mid-Trap Guarding) -->
+        <div class="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800/90 space-y-3">
+          <div class="flex items-center justify-between gap-2">
+            <div>
+              <label class="text-xs font-bold text-slate-100 block">
+                Interscapular Soreness
+              </label>
+              <span class="text-[11px] text-slate-400">Rhomboid, mid-trap tone &amp; scapular retraction</span>
+            </div>
+            <span
+              id="interscapValueBadge"
+              class="min-w-[4.25rem] text-center px-2.5 py-1 rounded-xl text-xs font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+            >
+              2 / 10 • Calm
+            </span>
+          </div>
+
+          <!-- Tactile Stepper & 3-Zone Segmented Pill Bar -->
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              id="interscapMinusBtn"
+              class="tactile-stepper-btn rounded-xl bg-slate-900 active:bg-slate-800 hover:bg-slate-800/90 border border-slate-700/80 text-xl font-bold text-slate-200 shrink-0 active:scale-90 transition shadow-sm"
+              aria-label="Decrease Interscapular Soreness"
+            >
+              −
+            </button>
+            <div class="flex-1 grid grid-cols-3 gap-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800 select-none">
+              <button
+                type="button"
+                data-symptom="interscap"
+                data-zone="calm"
+                class="zone-pill-btn py-2 px-1 rounded-lg text-center font-bold text-xs border border-transparent transition active:scale-95 flex flex-col items-center justify-center gap-0.5"
+              >
+                <span class="text-[11px] leading-tight">Calm</span>
+                <span class="text-[9px] font-mono opacity-80">0–3</span>
+              </button>
+              <button
+                type="button"
+                data-symptom="interscap"
+                data-zone="caution"
+                class="zone-pill-btn py-2 px-1 rounded-lg text-center font-bold text-xs border border-transparent transition active:scale-95 flex flex-col items-center justify-center gap-0.5"
+              >
+                <span class="text-[11px] leading-tight">Caution</span>
+                <span class="text-[9px] font-mono opacity-80">4–6</span>
+              </button>
+              <button
+                type="button"
+                data-symptom="interscap"
+                data-zone="flare"
+                class="zone-pill-btn py-2 px-1 rounded-lg text-center font-bold text-xs border border-transparent transition active:scale-95 flex flex-col items-center justify-center gap-0.5"
+              >
+                <span class="text-[11px] leading-tight">Flare</span>
+                <span class="text-[9px] font-mono opacity-80">7–10</span>
+              </button>
+            </div>
+            <button
+              type="button"
+              id="interscapPlusBtn"
+              class="tactile-stepper-btn rounded-xl bg-slate-900 active:bg-slate-800 hover:bg-slate-800/90 border border-slate-700/80 text-xl font-bold text-slate-200 shrink-0 active:scale-90 transition shadow-sm"
+              aria-label="Increase Interscapular Soreness"
+            >
+              +
+            </button>
+          </div>
+          <!-- Hidden range input for backwards compatibility -->
+          <input id="interscapSlider" type="range" min="0" max="10" step="1" value="2" class="hidden" />
+        </div>
+
+        <!-- Toggle: Radicular Symptoms Active -->
+        <label
+          for="radicularToggle"
+          class="flex items-center justify-between gap-3 p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/90 cursor-pointer active:bg-slate-900 transition"
+        >
+          <div>
+            <span class="text-xs font-bold text-slate-100 block">Cervical Radicular Symptoms Active?</span>
+            <span id="radicularStateLabel" class="text-[11px] text-slate-400">
+              No arm/hand paresthesia, tingling, or nerve root zingers
+            </span>
+          </div>
+          <div class="relative inline-flex items-center shrink-0">
+            <input id="radicularToggle" type="checkbox" class="sr-only peer" />
+            <div class="w-12 h-7 bg-slate-800 border border-slate-700 rounded-full peer peer-checked:bg-rose-500 peer-checked:border-rose-400 after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5"></div>
+          </div>
+        </label>
+
+        <!-- Optional Check-In Note -->
+        <div>
+          <label for="checkinNotesInput" class="block text-xs font-semibold text-slate-300 mb-1">
+            Daily Clinical Context / Sleep / Posture Note
+          </label>
+          <input
+            id="checkinNotesInput"
+            type="text"
+            placeholder="e.g., Slept well on cervical pillow, morning walk felt loose…"
+            class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3.5 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+          />
+        </div>
+
+        <!-- Instant Traffic Light Evaluation Output -->
+        <div id="trafficLightBanner" class="rounded-xl p-4 border bg-emerald-500/10 border-emerald-500/35 space-y-2.5">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span
+              id="trafficLightCodeBadge"
+              class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-500 text-slate-950"
+            >
+              PROGRESSIVE OVERLOAD + CUFF PREP
+            </span>
+            <span id="trafficLightDirective" class="text-[11px] font-bold text-emerald-300">
+              100% target load • Mandatory Cuff Centration Prep
+            </span>
+          </div>
+          <h3 id="trafficLightTitle" class="text-base font-extrabold text-white">
+            Green Light — Progressive Readiness
+          </h3>
+          <p id="trafficLightRationale" class="text-xs text-slate-300 leading-relaxed"></p>
+          <ul id="trafficLightActionsList" class="space-y-1.5 pt-1 text-xs text-slate-200"></ul>
+
+          <div class="pt-2">
+            <!-- Hidden button to preserve programmatic click triggers & backwards compatibility -->
+            <button id="saveCheckinBtn" type="button" class="hidden" aria-hidden="true"></button>
+            <button
+              id="trafficLightJumpBtn"
+              type="button"
+              class="w-full py-3.5 px-4 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-slate-100 font-bold text-xs active:scale-95 transition shadow-sm flex items-center justify-center gap-2"
+            >
+              Build Progressive Session →
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         TAB 2: THE DAILY ANCHOR (INTERACTIVE 4-STAGE TIMER)
+         =================================================================== -->
+    <section id="tab-anchor" class="tab-panel space-y-4" aria-label="Tier 1 Daily Anchor Timer">
+      <div class="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 shadow-lg space-y-4">
+        <div class="flex items-center justify-between gap-2">
+          <div>
+            <span class="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400">Tier 1 Daily Anchor • 6:00 Total</span>
+            <h2 class="text-base font-extrabold text-white">4-Stage Neuro-Decompression</h2>
+          </div>
+          <button
+            id="anchorSoundToggleBtn"
+            type="button"
+            class="px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-200 active:scale-95 transition"
+          >
+            <span id="anchorSoundLabel">🔔 Chime On</span>
+          </button>
+        </div>
+
+        <!-- Completed Today Banner -->
+        <div
+          id="anchorCompletionBanner"
+          class="hidden p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-xs font-semibold text-emerald-200 flex items-center justify-between"
+        >
+          <span>✓ Tier 1 Daily Anchor logged for today — streak protected!</span>
+          <span class="text-[10px] uppercase tracking-wider font-extrabold text-emerald-400">Done</span>
+        </div>
+
+        <!-- 4 Stage Selector Pills -->
+        <div id="anchorStagePills" class="grid grid-cols-4 gap-1.5"></div>
+
+        <!-- Circular SVG Timer -->
+        <div class="flex flex-col items-center justify-center py-2">
+          <div class="relative w-56 h-56 flex items-center justify-center">
+            <div
+              id="anchorPacerGlow"
+              class="absolute inset-4 rounded-full bg-emerald-500/10 border border-emerald-500/20 pointer-events-none"
+            ></div>
+            <svg class="w-56 h-56" viewBox="0 0 220 220">
+              <circle cx="110" cy="110" r="96" fill="none" stroke="#1e293b" stroke-width="10"></circle>
+              <circle
+                id="anchorRingCircle"
+                class="timer-ring-circle"
+                cx="110"
+                cy="110"
+                r="96"
+                fill="none"
+                stroke="#10b981"
+                stroke-width="10"
+                stroke-linecap="round"
+                stroke-dasharray="603.19"
+                stroke-dashoffset="0"
+              ></circle>
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
+              <span id="anchorStageStepLabel" class="text-[11px] font-extrabold uppercase tracking-widest text-emerald-400">
+                STAGE 1 OF 4
+              </span>
+              <span id="anchorTimeDisplay" class="font-mono text-5xl font-extrabold text-white tracking-tight my-1">
+                01:30
+              </span>
+              <span id="anchorCadenceHint" class="text-[11px] font-medium text-slate-400 leading-tight">
+                4s Nasal Inhale • 6s Slow Exhale
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transport Controls -->
+        <div class="flex items-center justify-center gap-3">
+          <button
+            id="anchorPrevStageBtn"
+            type="button"
+            class="w-12 h-12 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 flex items-center justify-center active:scale-95 transition"
+            aria-label="Previous Stage"
+          >
+            ◀
+          </button>
+          <button
+            id="anchorPlayPauseBtn"
+            type="button"
+            class="flex-1 max-w-[200px] h-13 py-3.5 px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95 transition"
+          >
+            <span id="anchorPlayIcon">▶</span>
+            <span id="anchorPlayLabel">Start Stage 1</span>
+          </button>
+          <button
+            id="anchorResetBtn"
+            type="button"
+            class="w-12 h-12 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 flex items-center justify-center active:scale-95 transition"
+            aria-label="Reset Routine"
+            title="Reset Routine"
+          >
+            ↺
+          </button>
+          <button
+            id="anchorNextStageBtn"
+            type="button"
+            class="w-12 h-12 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 flex items-center justify-center active:scale-95 transition"
+            aria-label="Next Stage"
+          >
+            ▶|
+          </button>
+        </div>
+
+        <!-- Active Stage Biomechanical Cue Sheet -->
+        <div class="rounded-xl bg-slate-950/90 border border-slate-800 p-4 space-y-2.5">
+          <div class="flex flex-wrap items-center justify-between gap-1">
+            <h3 id="anchorStageName" class="text-sm font-extrabold text-white">
+              1. Diaphragmatic Rib Expansion
+            </h3>
+            <span
+              id="anchorStageTarget"
+              class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-500/15 text-sky-300 border border-sky-500/30"
+            >
+              Inhibit Accessory Scalene &amp; SCM Breathing
+            </span>
+          </div>
+          <p id="anchorStageSummary" class="text-xs text-slate-300 leading-relaxed"></p>
+          <ul id="anchorStageCuesList" class="space-y-1.5 text-xs text-slate-200 pt-1"></ul>
+          <div class="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-[11px] text-rose-200">
+            <strong class="font-bold text-rose-300">Guardrail:</strong>
+            <span id="anchorStageFaultWarning"></span>
+          </div>
+        </div>
+
+        <button
+          id="markAnchorCompleteManualBtn"
+          type="button"
+          class="w-full py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 text-xs font-bold text-slate-300 active:scale-98 transition"
+        >
+          ✓ Completed Off-Screen — Log Daily Anchor Now
+        </button>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         TAB 3: CROSS GATES WORKOUT BUILDER
+         =================================================================== -->
+    <section id="tab-workout" class="tab-panel space-y-4" aria-label="Cross Gates Workout Builder">
+
+      <!-- Today's Readiness Autoregulation Banner -->
+      <div id="workoutReadinessBanner" class="rounded-2xl p-3.5 border bg-emerald-500/10 border-emerald-500/35"></div>
+
+      <!-- Blacklist Clinical Guardrail Warning Card (Dynamic) -->
+      <div
+        id="blacklistAlertCard"
+        class="hidden rounded-2xl bg-rose-950/80 border-2 border-rose-500 p-4 space-y-2.5 glow-red"
+        role="alert"
+      >
+        <div class="flex items-start justify-between gap-2">
+          <div>
+            <span
+              id="blacklistAlertTag"
+              class="inline-block px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider bg-rose-500 text-white"
+            >
+              CLINICAL BLACKLIST GUARDRAIL
+            </span>
+            <h3 id="blacklistAlertTitle" class="text-sm font-extrabold text-white mt-1">
+              High-Risk Movement Flagged
+            </h3>
+          </div>
+          <button
+            id="blacklistDismissBtn"
+            type="button"
+            class="text-xs text-rose-200 px-2 py-1 rounded bg-rose-900/60"
+          >
+            ✕
+          </button>
+        </div>
+        <p id="blacklistAlertBody" class="text-xs text-rose-100 leading-relaxed"></p>
+        <button
+          id="blacklistSwapBtn"
+          type="button"
+          class="w-full py-2.5 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs active:scale-98 transition"
+        >
+          + Swap Safe Cross Gates Alternative Instead
+        </button>
+      </div>
+
+      <!-- Cross Gates Exercise Library -->
+      <div class="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-3.5">
+        <div>
+          <h2 class="text-base font-extrabold text-white">Cross Gates Athletic Club Library</h2>
+          <p class="text-xs text-slate-400">Tap exercises to queue sets, or inspect Blacklist Guardrails</p>
+        </div>
+
+        <!-- Category Filter Scroller -->
+        <div class="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+          <button data-cat="prep" type="button" class="cg-cat-btn shrink-0 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-500 text-slate-950">
+            Prep (Cuff/Scap)
+          </button>
+          <button data-cat="pulls" type="button" class="cg-cat-btn shrink-0 px-3 py-1.5 rounded-full text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700">
+            Pulls
+          </button>
+          <button data-cat="presses" type="button" class="cg-cat-btn shrink-0 px-3 py-1.5 rounded-full text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700">
+            Presses
+          </button>
+          <button data-cat="legs" type="button" class="cg-cat-btn shrink-0 px-3 py-1.5 rounded-full text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700">
+            Legs &amp; Cardio
+          </button>
+          <button data-cat="blacklist" type="button" class="cg-cat-btn shrink-0 px-3 py-1.5 rounded-full text-xs font-bold bg-rose-500/15 text-rose-300 border border-rose-500/40">
+            ⚠ Blacklist (4)
+          </button>
+        </div>
+
+        <!-- Library Cards Container -->
+        <div id="cgExerciseLibraryList" class="space-y-2.5"></div>
+
+        <!-- Custom Exercise Entry + Live Blacklist Check -->
+        <div class="pt-2 border-t border-slate-800">
+          <label for="customExerciseInput" class="block text-[11px] font-semibold text-slate-400 mb-1.5">
+            Add Custom Movement (Protected by Live Blacklist Scanner)
+          </label>
+          <div class="flex gap-2">
+            <input
+              id="customExerciseInput"
+              type="text"
+              placeholder="e.g., Cable Face Pull or test 'Overhead Press'…"
+              class="flex-1 rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+            />
+            <button
+              id="addCustomExerciseBtn"
+              type="button"
+              class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-100 active:scale-95 transition shrink-0"
+            >
+              + Add
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Session Quick-Log Builder -->
+      <div class="rounded-2xl bg-slate-900/95 border border-slate-800 p-4 space-y-3.5 shadow-lg">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 class="text-sm font-extrabold text-white">Active Session Logger</h3>
+            <p id="workoutVolumePreview" class="text-[11px] text-slate-400">0 exercises queued</p>
+          </div>
+          <span
+            id="workoutPrepStatusBadge"
+            class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/35"
+          >
+            Add Cuff Prep First
+          </span>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-2">
+          <select
+            id="workoutFocusSelect"
+            aria-label="Workout Focus"
+            class="flex-1 rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-slate-100 focus:outline-none focus:border-emerald-500"
+          >
+            <option value="Pulls & Scapular Control (Cross Gates)">Pulls &amp; Scapular Control (Cross Gates)</option>
+            <option value="Landmine & Cable Press (Labrum Safe)">Landmine &amp; Cable Press (Labrum Safe)</option>
+            <option value="Zero-Axial Legs & Turf Sled">Zero-Axial Legs &amp; Turf Sled</option>
+            <option value="Full-Body Autoregulated Hybrid">Full-Body Autoregulated Hybrid</option>
+            <option value="Neuromuscular Cuff & Lower-Trap Re-Ed">Neuromuscular Cuff &amp; Lower-Trap Re-Ed</option>
+          </select>
+          <button
+            id="applyYellowLoadBtn"
+            type="button"
+            class="py-2.5 px-3 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 text-xs font-bold active:scale-95 transition shrink-0"
+            title="Reduce all current loads by 25% for Yellow Light autoregulation"
+          >
+            Apply -25% Yellow Load
+          </button>
+        </div>
+
+        <div id="activeWorkoutExercisesContainer" class="space-y-2.5"></div>
+
+        <div class="flex gap-2 pt-1">
+          <button
+            id="saveWorkoutBtn"
+            type="button"
+            class="flex-1 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm active:scale-98 transition shadow-md"
+          >
+            Save Workout to Log
+          </button>
+          <button
+            id="clearWorkoutDraftBtn"
+            type="button"
+            class="px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 active:scale-95 transition"
+          >
+            Clear
+          </button>
+        </div>
+      </div>
+
+      <!-- Recent Workouts History -->
+      <div class="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-3">
+        <h3 class="text-sm font-extrabold text-white">Recent Cross Gates Sessions</h3>
+        <div id="workoutHistoryList" class="space-y-2.5"></div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         TAB 4: ANALYTICS & BIOMECHANICAL TRENDS
+         =================================================================== -->
+    <section id="tab-analytics" class="tab-panel space-y-4" aria-label="Analytics and Biomechanical Trends">
+
+      <!-- Summary KPI Strip -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+        <div class="rounded-xl bg-slate-900/90 border border-slate-800 p-3">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-sky-400">14d Avg Scalp</span>
+          <div id="kpiAvgScalp" class="text-lg font-extrabold text-white mt-0.5">—</div>
+        </div>
+        <div class="rounded-xl bg-slate-900/90 border border-slate-800 p-3">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400">14d Interscap</span>
+          <div id="kpiAvgInterscap" class="text-lg font-extrabold text-white mt-0.5">—</div>
+        </div>
+        <div class="rounded-xl bg-slate-900/90 border border-slate-800 p-3">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Green / Autoreg</span>
+          <div id="kpiReadinessRatio" class="text-lg font-extrabold text-white mt-0.5">—</div>
+        </div>
+        <div class="rounded-xl bg-slate-900/90 border border-slate-800 p-3">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Logged Lifts</span>
+          <div id="kpiTotalWorkouts" class="text-lg font-extrabold text-white mt-0.5">0</div>
+        </div>
+      </div>
+
+      <!-- Chart 1: 14-Day Dual-Axis Trend -->
+      <div class="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-2.5">
+        <div>
+          <h2 class="text-sm font-extrabold text-white">14-Day Dual-Axis Neural &amp; Guarding Trend</h2>
+          <p class="text-xs text-slate-400">Scalp Pressure ("Tight Hat") vs. Interscapular Soreness</p>
+        </div>
+        <div class="h-60 w-full relative">
+          <canvas id="symptomTrendCanvas"></canvas>
+        </div>
+      </div>
+
+      <!-- Chart 2: Volume vs. Readiness -->
+      <div class="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-2.5">
+        <div>
+          <h2 class="text-sm font-extrabold text-white">Weekly Volume vs. Traffic Light Readiness</h2>
+          <p class="text-xs text-slate-400">Training volume (lbs) overlaid against Green / Yellow / Red frequency</p>
+        </div>
+        <div class="h-60 w-full relative">
+          <canvas id="volumeReadinessCanvas"></canvas>
+        </div>
+      </div>
+
+      <!-- Chart 3: 30-Day Adherence Grid -->
+      <div class="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-3">
+        <div class="flex items-center justify-between gap-2">
+          <div>
+            <h2 class="text-sm font-extrabold text-white">30-Day Adherence Grid</h2>
+            <p class="text-xs text-slate-400">Steps • Journal • Daily Anchor (tap any day to inspect)</p>
+          </div>
+          <div class="flex items-center gap-1 text-[10px] text-slate-400">
+            <span class="w-2.5 h-2.5 rounded-sm bg-slate-900 border border-slate-700 inline-block"></span>
+            <span>0</span>
+            <span class="w-2.5 h-2.5 rounded-sm bg-emerald-900 inline-block"></span>
+            <span class="w-2.5 h-2.5 rounded-sm bg-emerald-700 inline-block"></span>
+            <span class="w-2.5 h-2.5 rounded-sm bg-emerald-400 inline-block"></span>
+            <span>3/3</span>
+          </div>
+        </div>
+
+        <div id="adherenceGridContainer" class="adherence-grid"></div>
+        <div id="adherenceDayDetail" class="p-3 rounded-xl bg-slate-950 border border-slate-800"></div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         TAB 5: AI CONSULTANT & SETTINGS
+         =================================================================== -->
+    <section id="tab-consultant" class="tab-panel space-y-4" aria-label="AI Consultant and Settings">
+
+      <!-- In-App Gemini Flash Clinical Consultant -->
+      <div class="rounded-2xl bg-slate-900/95 border border-slate-800 p-4 space-y-3.5 shadow-lg">
+        <div class="flex items-start justify-between gap-2">
+          <div>
+            <span class="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400">Gemini Flash Integration</span>
+            <h2 class="text-base font-extrabold text-white">AI Sports PT Tactical Consultant</h2>
+            <p class="text-xs text-slate-400">Injects C5-C7, occipital &amp; cuff profile + live telemetry</p>
+          </div>
+          <button
+            id="voiceMicBtn"
+            type="button"
+            class="w-11 h-11 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-100 flex items-center justify-center shrink-0 active:scale-95 transition"
+            title="Voice Dictation (Web Speech API)"
+            aria-label="Dictate clinical question"
+          >
+            🎙️
+          </button>
+        </div>
+
+        <div id="voiceMicStatus" class="hidden text-xs font-semibold text-rose-300 bg-rose-500/10 border border-rose-500/30 px-3 py-1.5 rounded-lg"></div>
+
+        <!-- Quick Tactical Prompt Chips -->
+        <div class="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+          <button
+            type="button"
+            data-prompt="Scalp pressure crept to 5/10 after desk work. Adjust my Cross Gates pull workout today."
+            class="ai-prompt-chip shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-950 border border-slate-800 text-slate-300 active:scale-95"
+          >
+            Tight Hat 5/10 Pull Plan
+          </button>
+          <button
+            type="button"
+            data-prompt="I am in Phase 2 (28h post-massage). Give me a low-load serratus and cuff motor learning sequence."
+            class="ai-prompt-chip shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-950 border border-slate-800 text-slate-300 active:scale-95"
+          >
+            24-48h Neuroplastic Drill
+          </button>
+          <button
+            type="button"
+            data-prompt="Review my 7-day trend and tell me how to progress Landmine & Sled volume safely."
+            class="ai-prompt-chip shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-950 border border-slate-800 text-slate-300 active:scale-95"
+          >
+            7-Day Volume Progression
+          </button>
+        </div>
+
+        <div>
+          <textarea
+            id="aiPromptInput"
+            rows="3"
+            placeholder="Ask a tactical PT or Cross Gates workout question (or tap 🎙️ to speak)…"
+            class="w-full rounded-xl bg-slate-950 border border-slate-800 p-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+          ></textarea>
+        </div>
+
+        <button
+          id="askAiBtn"
+          type="button"
+          class="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm active:scale-98 transition shadow-md"
+        >
+          Generate 3-Bullet Tactical Recommendation
+        </button>
+
+        <!-- Output Card -->
+        <div id="aiResponseCard" class="hidden rounded-xl bg-slate-950/90 border border-emerald-500/35 p-3.5 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-400">3-Bullet Clinical Directive</span>
+            <span id="aiModelBadge" class="text-[10px] font-mono text-slate-400"></span>
+          </div>
+          <div id="aiResponseBody"></div>
+        </div>
+
+        <!-- Inspectable Clinical System Prompt -->
+        <details class="rounded-xl bg-slate-950/70 border border-slate-800/80 px-3 py-2 text-xs text-slate-400">
+          <summary class="cursor-pointer font-semibold text-slate-300 select-none">
+            Inspect Compiled Clinical System Prompt
+          </summary>
+          <pre
+            id="clinicalSystemPromptPreview"
+            class="mt-2 whitespace-pre-wrap font-mono text-[10px] text-slate-400 leading-relaxed max-h-52 overflow-y-auto"
+          ></pre>
+        </details>
+      </div>
+
+      <!-- Google AI Studio API Key & Model Config -->
+      <div class="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-3">
+        <div>
+          <h3 class="text-sm font-extrabold text-white">Gemini API &amp; Model Configuration</h3>
+          <p class="text-xs text-slate-400">Stored strictly client-side in your device's IndexedDB</p>
+        </div>
+
+        <div>
+          <label for="geminiApiKeyInput" class="block text-xs font-semibold text-slate-300 mb-1">
+            Google AI Studio API Key
+          </label>
+          <div class="flex gap-2">
+            <input
+              id="geminiApiKeyInput"
+              type="password"
+              autocomplete="off"
+              placeholder="AIzaSy…"
+              class="flex-1 rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+            />
+            <button
+              id="toggleApiKeyVisibilityBtn"
+              type="button"
+              class="px-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-300"
+            >
+              Show
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label for="geminiModelInput" class="block text-xs font-semibold text-slate-300 mb-1">
+            Gemini Flash Model ID
+          </label>
+          <input
+            id="geminiModelInput"
+            type="text"
+            value="gemini-2.5-flash"
+            class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2.5 text-slate-100 font-mono focus:outline-none focus:border-emerald-500"
+          />
+          <div class="flex items-center gap-2 mt-2">
+            <span class="text-[11px] text-slate-400">Presets:</span>
+            <button
+              type="button"
+              data-model="gemini-2.5-flash"
+              class="model-preset-chip px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-[11px] font-mono text-emerald-300"
+            >
+              gemini-2.5-flash
+            </button>
+            <button
+              type="button"
+              data-model="gemini-3.8-flash"
+              class="model-preset-chip px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-[11px] font-mono text-sky-300"
+            >
+              gemini-3.8-flash
+            </button>
+          </div>
+        </div>
+
+        <button
+          id="saveAiSettingsBtn"
+          type="button"
+          class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-extrabold text-white active:scale-98 transition"
+        >
+          Save API Key &amp; Model Preference
+        </button>
+      </div>
+
+      <!-- Baseline Streak Counters Setup -->
+      <div id="baselineSettingsCard" class="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-3">
+        <div>
+          <h3 class="text-sm font-extrabold text-white">Multi-Year Streak Baselines</h3>
+          <p class="text-xs text-slate-400">Enter existing pre-app streaks (e.g., 1,095 days) so Day 1 displays accurately</p>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2.5">
+          <div>
+            <label for="baselineStepsInput" class="block text-[11px] font-semibold text-slate-300 mb-1">10k+ Steps</label>
+            <input
+              id="baselineStepsInput"
+              type="number"
+              min="0"
+              placeholder="1095"
+              class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+          <div>
+            <label for="baselineJournalInput" class="block text-[11px] font-semibold text-slate-300 mb-1">Journaling</label>
+            <input
+              id="baselineJournalInput"
+              type="number"
+              min="0"
+              placeholder="1095"
+              class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+          <div>
+            <label for="baselineAnchorInput" class="block text-[11px] font-semibold text-slate-300 mb-1">Daily Anchor</label>
+            <input
+              id="baselineAnchorInput"
+              type="number"
+              min="0"
+              placeholder="365"
+              class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-slate-100 focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+        </div>
+
+        <button
+          id="saveBaselinesBtn"
+          type="button"
+          class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-extrabold text-white active:scale-98 transition"
+        >
+          Save Streak Baselines
+        </button>
+      </div>
+
+      <!-- Setup Utilities & Local Backup Safety -->
+      <div class="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-3">
+        <div>
+          <h3 class="text-sm font-extrabold text-white">Data Safety &amp; Demo Telemetry</h3>
+          <p class="text-xs text-slate-400">Back up IndexedDB locally as JSON or populate 7-day sample trends</p>
+        </div>
+
+        <button
+          id="loadDemoDataBtn"
+          type="button"
+          class="w-full py-3 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-400/40 text-sky-300 font-extrabold text-xs active:scale-98 transition"
+        >
+          ⚡ Load Demo Data (7 Days + Active Post-Massage Timer)
+        </button>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <button
+            id="exportJsonBtn"
+            type="button"
+            class="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-100 active:scale-95 transition"
+          >
+            ⬇ Export JSON Backup
+          </button>
+          <button
+            id="importJsonBtn"
+            type="button"
+            class="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-100 active:scale-95 transition"
+          >
+            ⬆ Import JSON Backup
+          </button>
+          <input id="importJsonFileInput" type="file" accept=".json,application/json" class="hidden" />
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Floating Toast Feedback -->
+  <div
+    id="appToast"
+    class="hidden fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-full bg-slate-900/95 border border-emerald-500/50 text-xs font-bold text-slate-100 shadow-2xl whitespace-nowrap"
+    role="status"
+    aria-live="polite"
+  >
+    <span id="appToastText">Saved</span>
+  </div>
+
+  <!-- Bottom-Fixed Mobile Tab Bar (Large Ergonomic Touch Targets) -->
+  <nav
+    class="bottom-tab-bar fixed bottom-0 inset-x-0 z-40 bg-slate-950/92 border-t border-slate-800/90"
+    aria-label="Primary Navigation"
+  >
+    <div class="max-w-xl mx-auto grid grid-cols-5 px-1 pt-1">
+      <button
+        type="button"
+        data-tab="dashboard"
+        class="tab-btn min-h-[54px] flex flex-col items-center justify-center gap-0.5 rounded-xl text-emerald-400 font-bold transition"
+      >
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 13h8V3H3v10zm10 8h8V11h-8v10zM3 21h8v-6H3v6zm10-18v6h8V3h-8z" />
+        </svg>
+        <span class="text-[10px]">Readiness</span>
+      </button>
+
+      <button
+        type="button"
+        data-tab="anchor"
+        class="tab-btn min-h-[54px] flex flex-col items-center justify-center gap-0.5 rounded-xl text-slate-400 font-semibold transition"
+      >
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="9" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3 3" />
+        </svg>
+        <span class="text-[10px]">Anchor</span>
+      </button>
+
+      <button
+        type="button"
+        data-tab="workout"
+        class="tab-btn min-h-[54px] flex flex-col items-center justify-center gap-0.5 rounded-xl text-slate-400 font-semibold transition"
+      >
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6.5 6.5v11M17.5 6.5v11M3 9v6M21 9v6M6.5 12h11" />
+        </svg>
+        <span class="text-[10px]">Workout</span>
+      </button>
+
+      <button
+        type="button"
+        data-tab="analytics"
+        class="tab-btn min-h-[54px] flex flex-col items-center justify-center gap-0.5 rounded-xl text-slate-400 font-semibold transition"
+      >
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 19h16M7 15l3-4 3 2 4-6" />
+        </svg>
+        <span class="text-[10px]">Trends</span>
+      </button>
+
+      <button
+        type="button"
+        data-tab="consultant"
+        class="tab-btn min-h-[54px] flex flex-col items-center justify-center gap-0.5 rounded-xl text-slate-400 font-semibold transition"
+      >
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.4L12 3zM19 16l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8.8-2z" />
+        </svg>
+        <span class="text-[10px]">AI &amp; Setup</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ES6 Module Entrypoint -->
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>

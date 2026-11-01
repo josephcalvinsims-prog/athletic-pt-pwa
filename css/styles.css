@@ -1,0 +1,291 @@
+/* ==========================================================================
+   Apex Autoreg PT — Mobile-First Athletic & Clinical Dark UI Stylesheet
+   Complements Tailwind CSS Play CDN (Zero-Build Architecture)
+   ========================================================================== */
+
+:root {
+  --bg-primary: #020617;      /* slate-950 */
+  --bg-card: #0f172a;         /* slate-900 */
+  --bg-elevated: #1e293b;     /* slate-800 */
+  --text-primary: #f1f5f9;    /* slate-100 */
+  --text-muted: #94a3b8;      /* slate-400 */
+  --status-green: #10b981;    /* emerald-500 */
+  --status-yellow: #f59e0b;   /* amber-500 */
+  --status-red: #f43f5e;      /* rose-500 */
+  --accent-cyan: #38bdf8;     /* sky-400 */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  color-scheme: dark;
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", system-ui, sans-serif;
+  min-height: 100dvh;
+  margin: 0;
+  overscroll-behavior-y: none;
+  padding-left: var(--safe-left);
+  padding-right: var(--safe-right);
+}
+
+/* iOS Notch / Dynamic Island & Home Indicator Safe Areas */
+.pt-safe {
+  padding-top: max(0.75rem, calc(var(--safe-top) + 0.5rem));
+}
+
+.pb-safe-nav {
+  padding-bottom: calc(5.75rem + var(--safe-bottom));
+}
+
+.bottom-tab-bar {
+  padding-bottom: max(0.45rem, var(--safe-bottom));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Subtle Ambient Mesh Backdrop */
+.athletic-shell {
+  background-image:
+    radial-gradient(circle at 15% 0%, rgba(16, 185, 129, 0.08) 0%, transparent 45%),
+    radial-gradient(circle at 88% 8%, rgba(56, 189, 248, 0.06) 0%, transparent 40%);
+}
+
+/* Tab View Transitions */
+.tab-panel {
+  display: none;
+  animation: panelFadeIn 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+@keyframes panelFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Traffic Light Status Glow Cards */
+.glow-green {
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.35), 0 10px 30px -10px rgba(16, 185, 129, 0.22);
+}
+
+.glow-yellow {
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.38), 0 10px 30px -10px rgba(245, 158, 11, 0.22);
+}
+
+.glow-red {
+  box-shadow: 0 0 0 1px rgba(244, 63, 94, 0.42), 0 10px 30px -10px rgba(244, 63, 94, 0.26);
+}
+
+/* Ergonomic Mobile Thumb Sliders (0-10 Symptom Scales) */
+input[type="range"].clinical-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 10px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    90deg,
+    rgba(16, 185, 129, 0.85) 0%,
+    rgba(16, 185, 129, 0.85) 30%,
+    rgba(245, 158, 11, 0.9) 50%,
+    rgba(244, 63, 94, 0.95) 80%,
+    rgba(244, 63, 94, 1) 100%
+  );
+  outline: none;
+  cursor: pointer;
+  touch-action: pan-y;
+}
+
+input[type="range"].clinical-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #f8fafc;
+  border: 3px solid #020617;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.65), 0 0 0 2px rgba(148, 163, 184, 0.45);
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+input[type="range"].clinical-slider:active::-webkit-slider-thumb {
+  transform: scale(1.14);
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.8), 0 0 0 4px rgba(56, 189, 248, 0.45);
+}
+
+input[type="range"].clinical-slider::-moz-range-thumb {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #f8fafc;
+  border: 3px solid #020617;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.65), 0 0 0 2px rgba(148, 163, 184, 0.45);
+  cursor: pointer;
+}
+
+/* SVG Circular Progress Rings (Streaks & Daily Anchor Timer) */
+.progress-ring-circle {
+  transition: stroke-dashoffset 450ms cubic-bezier(0.22, 1, 0.36, 1), stroke 250ms ease;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+}
+
+.timer-ring-circle {
+  transition: stroke-dashoffset 300ms linear, stroke 250ms ease;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+}
+
+/* Rhythmic Diaphragmatic Breathing / Pacer Pulse */
+@keyframes breathePulse {
+  0%, 100% {
+    transform: scale(0.94);
+    opacity: 0.55;
+  }
+  40% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+}
+
+.breathe-active {
+  animation: breathePulse 10s ease-in-out infinite;
+}
+
+/* Voice Microphone Recording Pulse */
+@keyframes micPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.65);
+  }
+  70% {
+    box-shadow: 0 0 0 14px rgba(244, 63, 94, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(244, 63, 94, 0);
+  }
+}
+
+.mic-listening {
+  animation: micPulse 1.5s infinite;
+}
+
+/* 30-Day Adherence Grid */
+.adherence-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+@media (min-width: 420px) {
+  .adherence-grid {
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+  }
+}
+
+/* Horizontal Pill Scroller without intrusive scrollbars */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Prevent iOS auto-zoom on form inputs by keeping font-size >= 16px */
+input[type="text"],
+input[type="number"],
+input[type="password"],
+input[type="datetime-local"],
+select,
+textarea {
+  font-size: 16px !important;
+}
+
+/* Toast Notification Animation */
+.toast-enter {
+  animation: toastSlideUp 220ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes toastSlideUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 14px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* Gym-Floor Tactile Stepper & Segmented Pill Controls */
+.tactile-stepper-btn {
+  min-width: 48px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.zone-pill-btn {
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: all 140ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.zone-calm-active {
+  background-color: rgba(16, 185, 129, 0.22) !important;
+  color: #6ee7b7 !important;
+  border-color: rgba(16, 185, 129, 0.6) !important;
+  box-shadow: 0 0 14px -2px rgba(16, 185, 129, 0.35);
+}
+
+.zone-caution-active {
+  background-color: rgba(245, 158, 11, 0.22) !important;
+  color: #fcd34d !important;
+  border-color: rgba(245, 158, 11, 0.65) !important;
+  box-shadow: 0 0 14px -2px rgba(245, 158, 11, 0.35);
+}
+
+.zone-flare-active {
+  background-color: rgba(244, 63, 94, 0.25) !important;
+  color: #fda4af !important;
+  border-color: rgba(244, 63, 94, 0.7) !important;
+  box-shadow: 0 0 14px -2px rgba(244, 63, 94, 0.4);
+}
+
+.quick-load-chip {
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}

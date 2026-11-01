@@ -1,0 +1,8 @@
+# OS & Editor artifacts
+.DS_Store
+Thumbs.db
+
+# Test profile & temporary browser caches
+.test_chrome_profile/
+.test_profile/
+*.log
