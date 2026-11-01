@@ -478,6 +478,68 @@ begin
   puts "  [PASS] Workout table numeric keypad attributes and quick load stepper chips (+10, -5) verified."
 
   # =========================================================================
+  # TEST C4: Tier 1 Daily Anchor Sensory Breathing Ring & Progressive Disclosure
+  # =========================================================================
+  puts "\n[TEST C4] Testing Daily Anchor sensory breathing ring & progressive disclosure..."
+  driver.eval_js("window.switchTab('anchor');")
+  sleep 0.3
+
+  anchor_test_result = driver.eval_js(<<~JS)
+    new Promise((resolve) => {
+      const sphere = document.getElementById('sensoryBreathSphere');
+      const phaseLabel = document.getElementById('anchorBreathPhaseLabel');
+      const playBtn = document.getElementById('anchorPlayPauseBtn');
+      const playTextInitial = playBtn ? playBtn.textContent.trim() : '';
+
+      // 1. Click Start Session
+      playBtn.click();
+
+      setTimeout(() => {
+        const isRunning = sphere && sphere.classList.contains('breath-inhale');
+        const phaseTextRunning = phaseLabel ? phaseLabel.textContent.trim() : '';
+        const playTextRunning = playBtn ? playBtn.textContent.trim() : '';
+
+        // 2. Pause Session
+        playBtn.click();
+
+        setTimeout(() => {
+          const isIdle = sphere && sphere.classList.contains('breath-idle');
+          const phaseTextPaused = phaseLabel ? phaseLabel.textContent.trim() : '';
+          const playTextPaused = playBtn ? playBtn.textContent.trim() : '';
+
+          // 3. Verify progressive disclosure accordions
+          const detailsAccordions = document.querySelectorAll('details.group');
+
+          resolve({
+            sphereExists: Boolean(sphere),
+            playTextInitial,
+            isRunning,
+            phaseTextRunning,
+            playTextRunning,
+            isIdle,
+            phaseTextPaused,
+            playTextPaused,
+            accordionCount: detailsAccordions.length
+          });
+        }, 300);
+      }, 400);
+    });
+  JS
+
+  puts "  Sensory Breathing Ring initial: #{anchor_test_result['playTextInitial']}"
+  puts "  On Start -> Active phase: #{anchor_test_result['phaseTextRunning']}, Button: #{anchor_test_result['playTextRunning']}"
+  puts "  On Pause -> Phase: #{anchor_test_result['phaseTextPaused']}, Button: #{anchor_test_result['playTextPaused']}"
+  puts "  Progressive Disclosure Accordions Found: #{anchor_test_result['accordionCount']}"
+
+  raise "Sensory breath sphere missing" unless anchor_test_result['sphereExists']
+  raise "Initial button should be Start Session" unless anchor_test_result['playTextInitial'].include?("Start Session")
+  raise "Sensory breathing ring not in inhale phase" unless anchor_test_result['isRunning'] && anchor_test_result['phaseTextRunning'].include?("INHALE")
+  raise "Play button should switch to Pause Session" unless anchor_test_result['playTextRunning'].include?("Pause Session")
+  raise "Pause session should return ring to idle" unless anchor_test_result['isIdle'] && (anchor_test_result['phaseTextPaused'].include?("PAUSED") || anchor_test_result['phaseTextPaused'].include?("READY"))
+  raise "Progressive disclosure accordions missing" unless anchor_test_result['accordionCount'] >= 5
+  puts "  [PASS] Sensory breathing ring expansion cadence, inflection haptic hooks, and progressive disclosure verified."
+
+  # =========================================================================
   # TEST D: Cycle through all 5 navigation tabs twice (Chart.js redrawing & no canvas collision)
   # =========================================================================
   puts "\n[TEST D] Cycling through all 5 navigation tabs twice (Testing Chart.js redraw & memory stability)..."

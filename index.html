@@ -376,9 +376,17 @@
           <div class="flex items-center justify-between gap-2">
             <div>
               <label class="text-xs font-bold text-slate-100 block">
-                Scalp Pressure ("Tight Hat" Sensation)
+                Scalp Pressure ("Tight Hat")
               </label>
-              <span class="text-[11px] text-slate-400">Cervico-occipital fascia &amp; nerve tension</span>
+              <details class="group mt-0.5">
+                <summary class="cursor-pointer text-[10px] font-semibold text-slate-400 hover:text-slate-300 flex items-center gap-1 select-none">
+                  <span>ℹ Clinical Rationale</span>
+                  <span class="text-[8px] text-slate-500 group-open:rotate-180 transition-transform">▼</span>
+                </summary>
+                <p class="mt-1 text-[11px] text-slate-400 pl-2.5 border-l-2 border-slate-800 leading-relaxed">
+                  Cervico-occipital fascia &amp; greater occipital nerve compression secondary to upper cervical isometric guarding.
+                </p>
+              </details>
             </div>
             <span
               id="scalpValueBadge"
@@ -459,7 +467,15 @@
               <label class="text-xs font-bold text-slate-100 block">
                 Levator Scapulae Tension
               </label>
-              <span class="text-[11px] text-slate-400">Upper cervical-scapular angle &amp; neck pull</span>
+              <details class="group mt-0.5">
+                <summary class="cursor-pointer text-[10px] font-semibold text-slate-400 hover:text-slate-300 flex items-center gap-1 select-none">
+                  <span>ℹ Clinical Rationale</span>
+                  <span class="text-[8px] text-slate-500 group-open:rotate-180 transition-transform">▼</span>
+                </summary>
+                <p class="mt-1 text-[11px] text-slate-400 pl-2.5 border-l-2 border-slate-800 leading-relaxed">
+                  Upper cervical-scapular angle guarding pulling on C1-C4 transverse processes to compensate for glenohumeral stability deficits.
+                </p>
+              </details>
             </div>
             <span
               id="levatorValueBadge"
@@ -540,7 +556,15 @@
               <label class="text-xs font-bold text-slate-100 block">
                 Interscapular Soreness
               </label>
-              <span class="text-[11px] text-slate-400">Rhomboid, mid-trap tone &amp; scapular retraction</span>
+              <details class="group mt-0.5">
+                <summary class="cursor-pointer text-[10px] font-semibold text-slate-400 hover:text-slate-300 flex items-center gap-1 select-none">
+                  <span>ℹ Clinical Rationale</span>
+                  <span class="text-[8px] text-slate-500 group-open:rotate-180 transition-transform">▼</span>
+                </summary>
+                <p class="mt-1 text-[11px] text-slate-400 pl-2.5 border-l-2 border-slate-800 leading-relaxed">
+                  Rhomboid &amp; mid-trapezius tonic overactivation acting as secondary stabilizers when rotator cuff dynamic centration is impaired.
+                </p>
+              </details>
             </div>
             <span
               id="interscapValueBadge"
@@ -660,8 +684,19 @@
           <h3 id="trafficLightTitle" class="text-base font-extrabold text-white">
             Green Light — Progressive Readiness
           </h3>
-          <p id="trafficLightRationale" class="text-xs text-slate-300 leading-relaxed"></p>
-          <ul id="trafficLightActionsList" class="space-y-1.5 pt-1 text-xs text-slate-200"></ul>
+          <ul id="trafficLightActionsList" class="space-y-1.5 pt-0.5 text-xs text-slate-200"></ul>
+
+          <!-- Collapsible Clinical Rationale Accordion -->
+          <details class="group rounded-xl bg-slate-900/70 border border-slate-800/80 p-2.5">
+            <summary class="cursor-pointer text-xs font-semibold text-slate-300 flex items-center justify-between select-none">
+              <span class="flex items-center gap-1.5">
+                <span class="text-xs text-emerald-400">ℹ</span>
+                <span>Clinical Rationale &amp; Mechanism</span>
+              </span>
+              <span class="text-[10px] text-slate-400 group-open:rotate-180 transition-transform">▼</span>
+            </summary>
+            <p id="trafficLightRationale" class="mt-2 text-xs text-slate-400 leading-relaxed"></p>
+          </details>
 
           <div class="pt-2">
             <!-- Hidden button to preserve programmatic click triggers & backwards compatibility -->
@@ -709,15 +744,18 @@
         <!-- 4 Stage Selector Pills -->
         <div id="anchorStagePills" class="grid grid-cols-4 gap-1.5"></div>
 
-        <!-- Circular SVG Timer -->
+        <!-- Sensory Breathing Ring & Cadence Pacer -->
         <div class="flex flex-col items-center justify-center py-2">
-          <div class="relative w-56 h-56 flex items-center justify-center">
+          <div class="relative w-64 h-64 flex items-center justify-center select-none">
+            <!-- Organic Breathing Halo / Outer Glow Sphere -->
             <div
-              id="anchorPacerGlow"
-              class="absolute inset-4 rounded-full bg-emerald-500/10 border border-emerald-500/20 pointer-events-none"
+              id="sensoryBreathSphere"
+              class="sensory-breath-sphere breath-idle absolute inset-2 rounded-full border-2 border-emerald-500/30 transition-all pointer-events-none"
             ></div>
-            <svg class="w-56 h-56" viewBox="0 0 220 220">
-              <circle cx="110" cy="110" r="96" fill="none" stroke="#1e293b" stroke-width="10"></circle>
+
+            <!-- Stage Progress SVG Track -->
+            <svg class="w-64 h-64 -rotate-90 pointer-events-none" viewBox="0 0 220 220">
+              <circle cx="110" cy="110" r="96" fill="none" stroke="#1e293b" stroke-width="4" opacity="0.6"></circle>
               <circle
                 id="anchorRingCircle"
                 class="timer-ring-circle"
@@ -726,48 +764,65 @@
                 r="96"
                 fill="none"
                 stroke="#10b981"
-                stroke-width="10"
+                stroke-width="5"
                 stroke-linecap="round"
                 stroke-dasharray="603.19"
                 stroke-dashoffset="0"
+                opacity="0.9"
               ></circle>
             </svg>
-            <div class="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
-              <span id="anchorStageStepLabel" class="text-[11px] font-extrabold uppercase tracking-widest text-emerald-400">
-                STAGE 1 OF 4
+
+            <!-- Center Sensory Content -->
+            <div class="absolute inset-0 flex flex-col items-center justify-center text-center px-6 pointer-events-none">
+              <!-- Breathing Phase Pill -->
+              <span
+                id="anchorBreathPhaseLabel"
+                class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-widest bg-slate-800 text-slate-300 border border-slate-700 transition-all duration-300 shadow-sm"
+              >
+                READY
               </span>
-              <span id="anchorTimeDisplay" class="font-mono text-5xl font-extrabold text-white tracking-tight my-1">
+
+              <!-- Big Countdown Clock -->
+              <span id="anchorTimeDisplay" class="font-mono text-5xl font-black text-white tracking-tight my-1 drop-shadow-md">
                 01:30
               </span>
-              <span id="anchorCadenceHint" class="text-[11px] font-medium text-slate-400 leading-tight">
-                4s Nasal Inhale • 6s Slow Exhale
+
+              <!-- Stage Step Label -->
+              <span id="anchorStageStepLabel" class="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400">
+                STAGE 1 OF 4
+              </span>
+
+              <!-- Cadence Hint -->
+              <span id="anchorCadenceHint" class="text-[11px] font-medium text-slate-400 leading-tight mt-0.5">
+                4.0s Inhale • 0.5s Hold • 6.0s Exhale
               </span>
             </div>
           </div>
         </div>
 
-        <!-- Transport Controls -->
+        <!-- Start / Pause Session Toggle & Transport Controls -->
         <div class="flex items-center justify-center gap-3">
           <button
             id="anchorPrevStageBtn"
             type="button"
-            class="w-12 h-12 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 flex items-center justify-center active:scale-95 transition"
+            class="w-12 h-12 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 flex items-center justify-center active:scale-95 transition shadow-sm cursor-pointer"
             aria-label="Previous Stage"
+            title="Previous Stage"
           >
             ◀
           </button>
           <button
             id="anchorPlayPauseBtn"
             type="button"
-            class="flex-1 max-w-[200px] h-13 py-3.5 px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95 transition"
+            class="flex-1 max-w-[220px] h-13 py-3.5 px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 active:scale-95 transition cursor-pointer select-none"
           >
             <span id="anchorPlayIcon">▶</span>
-            <span id="anchorPlayLabel">Start Stage 1</span>
+            <span id="anchorPlayLabel">Start Session</span>
           </button>
           <button
             id="anchorResetBtn"
             type="button"
-            class="w-12 h-12 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 flex items-center justify-center active:scale-95 transition"
+            class="w-12 h-12 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 flex items-center justify-center active:scale-95 transition shadow-sm cursor-pointer"
             aria-label="Reset Routine"
             title="Reset Routine"
           >
@@ -776,32 +831,48 @@
           <button
             id="anchorNextStageBtn"
             type="button"
-            class="w-12 h-12 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 flex items-center justify-center active:scale-95 transition"
+            class="w-12 h-12 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 flex items-center justify-center active:scale-95 transition shadow-sm cursor-pointer"
             aria-label="Next Stage"
+            title="Next Stage"
           >
             ▶|
           </button>
         </div>
 
         <!-- Active Stage Biomechanical Cue Sheet -->
-        <div class="rounded-xl bg-slate-950/90 border border-slate-800 p-4 space-y-2.5">
-          <div class="flex flex-wrap items-center justify-between gap-1">
+        <div class="rounded-2xl bg-slate-950/90 border border-slate-800 p-4 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-1.5">
             <h3 id="anchorStageName" class="text-sm font-extrabold text-white">
               1. Diaphragmatic Rib Expansion
             </h3>
-            <span
-              id="anchorStageTarget"
-              class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-500/15 text-sky-300 border border-sky-500/30"
-            >
-              Inhibit Accessory Scalene &amp; SCM Breathing
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+              Immediate Cues
             </span>
           </div>
-          <p id="anchorStageSummary" class="text-xs text-slate-300 leading-relaxed"></p>
-          <ul id="anchorStageCuesList" class="space-y-1.5 text-xs text-slate-200 pt-1"></ul>
-          <div class="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-[11px] text-rose-200">
+
+          <!-- Immediate Cues (Primary View) -->
+          <ul id="anchorStageCuesList" class="space-y-1.5 text-xs text-slate-200"></ul>
+
+          <!-- Immediate Guardrail (Primary View) -->
+          <div class="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-[11px] text-rose-200">
             <strong class="font-bold text-rose-300">Guardrail:</strong>
             <span id="anchorStageFaultWarning"></span>
           </div>
+
+          <!-- Progressive Disclosure: Clinical Rationale Collapsible Accordion -->
+          <details class="group rounded-xl bg-slate-900/70 border border-slate-800/80 p-3">
+            <summary class="cursor-pointer text-xs font-semibold text-slate-300 flex items-center justify-between select-none">
+              <span class="flex items-center gap-1.5">
+                <span class="text-xs text-emerald-400">ℹ</span>
+                <span>Clinical Rationale &amp; Biomechanical Target</span>
+              </span>
+              <span class="text-[10px] text-slate-400 group-open:rotate-180 transition-transform">▼</span>
+            </summary>
+            <div class="mt-2.5 space-y-2 text-xs text-slate-400 leading-relaxed">
+              <div id="anchorStageTarget" class="text-emerald-400 font-semibold"></div>
+              <p id="anchorStageSummary" class="text-slate-300"></p>
+            </div>
+          </details>
         </div>
 
         <button

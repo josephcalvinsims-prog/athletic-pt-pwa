@@ -78,7 +78,9 @@ const state = {
     endTimestampMs: null,
     intervalId: null,
     soundEnabled: true,
-    wakeLock: null
+    wakeLock: null,
+    breathPhase: 'idle',
+    breathTimeouts: []
   },
 
   // Tab 3: Cross Gates Workout Builder State
@@ -881,8 +883,95 @@ function styleMetricBadge(elId, val) {
 }
 
 /* ==========================================================================
-   TAB 2: THE DAILY ANCHOR (4-STAGE NEURO-DECOMPRESSION INTERACTIVE TIMER)
+   TAB 2: THE DAILY ANCHOR (SENSORY BREATHING PACER & NEURO-DECOMPRESSION)
    ========================================================================== */
+function clearBreathingCycle() {
+  if (state.anchor.breathTimeouts && state.anchor.breathTimeouts.length > 0) {
+    state.anchor.breathTimeouts.forEach((id) => clearTimeout(id));
+    state.anchor.breathTimeouts = [];
+  }
+}
+
+function setBreathingPhase(phase) {
+  state.anchor.breathPhase = phase;
+  const sphere = document.getElementById('sensoryBreathSphere');
+  const phaseLabel = document.getElementById('anchorBreathPhaseLabel');
+
+  if (sphere) {
+    sphere.className = `sensory-breath-sphere breath-${phase} absolute inset-2 rounded-full border-2 transition-all pointer-events-none`;
+  }
+
+  if (phaseLabel) {
+    if (phase === 'inhale') {
+      phaseLabel.textContent = 'INHALE • 4.0s';
+      phaseLabel.className =
+        'px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-emerald-500/25 text-emerald-300 border border-emerald-400/60 shadow-[0_0_12px_rgba(16,185,129,0.3)] transition-all duration-300';
+    } else if (phase === 'hold') {
+      phaseLabel.textContent = 'HOLD • 0.5s';
+      phaseLabel.className =
+        'px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-teal-500/25 text-teal-300 border border-teal-400/60 shadow-[0_0_12px_rgba(20,184,166,0.3)] transition-all duration-300';
+    } else if (phase === 'exhale') {
+      phaseLabel.textContent = 'EXHALE • 6.0s';
+      phaseLabel.className =
+        'px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-sky-500/20 text-sky-300 border border-sky-400/50 shadow-[0_0_10px_rgba(56,189,248,0.2)] transition-all duration-300';
+    } else {
+      const isMidway = state.anchor.remainingSec < ANCHOR_STAGES[state.anchor.stageIndex].durationSeconds;
+      phaseLabel.textContent = isMidway ? 'PAUSED' : 'READY';
+      phaseLabel.className =
+        'px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-slate-800 text-slate-400 border border-slate-700 transition-all duration-300';
+    }
+  }
+}
+
+function startBreathingCycle() {
+  clearBreathingCycle();
+  if (!state.anchor.isRunning) return;
+
+  // 1. INHALE (4.0s): Smooth scale-up from 0.85 to 1.15, soft teal/emerald glow
+  setBreathingPhase('inhale');
+  // Inhale inflection: single gentle pulse (20ms)
+  if (typeof navigator !== 'undefined' && navigator.vibrate) {
+    try {
+      navigator.vibrate(20);
+    } catch {
+      // Ignore vibration error on unsupported policy-blocked environments
+    }
+  }
+
+  const holdTimeout = setTimeout(() => {
+    if (!state.anchor.isRunning) return;
+
+    // 2. PAUSE / HOLD (0.5s): Hold at top
+    setBreathingPhase('hold');
+
+    const exhaleTimeout = setTimeout(() => {
+      if (!state.anchor.isRunning) return;
+
+      // 3. EXHALE (6.0s): Smooth scale-down back to 0.85, calming fade
+      setBreathingPhase('exhale');
+      // Exhale inflection: soft double pulse ([25, 40, 25]ms)
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        try {
+          navigator.vibrate([25, 40, 25]);
+        } catch {
+          // Ignore vibration error
+        }
+      }
+
+      const nextCycleTimeout = setTimeout(() => {
+        if (!state.anchor.isRunning) return;
+        startBreathingCycle(); // Recurse smoothly
+      }, 6000);
+
+      state.anchor.breathTimeouts.push(nextCycleTimeout);
+    }, 500);
+
+    state.anchor.breathTimeouts.push(exhaleTimeout);
+  }, 4000);
+
+  state.anchor.breathTimeouts.push(holdTimeout);
+}
+
 function bindAnchorTimerEvents() {
   document.getElementById('anchorPlayPauseBtn')?.addEventListener('click', () => {
     if (state.anchor.isRunning) {
@@ -894,8 +983,10 @@ function bindAnchorTimerEvents() {
 
   document.getElementById('anchorResetBtn')?.addEventListener('click', () => {
     pauseAnchorTimer();
+    clearBreathingCycle();
     state.anchor.stageIndex = 0;
     state.anchor.remainingSec = ANCHOR_STAGES[0].durationSeconds;
+    setBreathingPhase('idle');
     renderAnchorTimerView();
   });
 
@@ -925,8 +1016,10 @@ function bindAnchorTimerEvents() {
 function jumpToAnchorStage(stageIdx) {
   const wasRunning = state.anchor.isRunning;
   pauseAnchorTimer();
+  clearBreathingCycle();
   state.anchor.stageIndex = stageIdx;
   state.anchor.remainingSec = ANCHOR_STAGES[stageIdx].durationSeconds;
+  setBreathingPhase('idle');
   renderAnchorTimerView();
   if (wasRunning) {
     startAnchorTimer();
@@ -942,6 +1035,9 @@ async function startAnchorTimer() {
 
   state.anchor.isRunning = true;
   state.anchor.endTimestampMs = Date.now() + state.anchor.remainingSec * 1000;
+
+  // Start smooth sensory breathing cadence pacer
+  startBreathingCycle();
 
   state.anchor.intervalId = setInterval(() => {
     const msLeft = state.anchor.endTimestampMs - Date.now();
@@ -965,17 +1061,21 @@ function pauseAnchorTimer() {
   }
   state.anchor.isRunning = false;
   state.anchor.endTimestampMs = null;
+  clearBreathingCycle();
+  setBreathingPhase('idle');
   releaseScreenWakeLock();
   renderAnchorTimerView();
 }
 
 async function advanceAnchorStageOrFinish() {
+  clearBreathingCycle();
   if (state.anchor.stageIndex < ANCHOR_STAGES.length - 1) {
     state.anchor.stageIndex += 1;
     const nextStage = ANCHOR_STAGES[state.anchor.stageIndex];
     state.anchor.remainingSec = nextStage.durationSeconds;
     state.anchor.endTimestampMs = Date.now() + nextStage.durationSeconds * 1000;
     playClinicalChime('stage');
+    startBreathingCycle();
     renderAnchorTimerView();
     showToast(`Stage ${nextStage.step}: ${nextStage.name}`);
   } else {
@@ -1008,14 +1108,9 @@ function renderAnchorTimerView() {
   const stage = ANCHOR_STAGES[state.anchor.stageIndex];
   const pillsContainer = document.getElementById('anchorStagePills');
   const doneBanner = document.getElementById('anchorCompletionBanner');
-  const pacerGlow = document.getElementById('anchorPacerGlow');
 
   if (doneBanner) {
     doneBanner.classList.toggle('hidden', !Boolean(state.todayCheckin?.anchorCompleted));
-  }
-
-  if (pacerGlow) {
-    pacerGlow.classList.toggle('breathe-active', state.anchor.isRunning);
   }
 
   if (pillsContainer) {
@@ -1049,14 +1144,14 @@ function renderAnchorTimerView() {
   const faultWarning = document.getElementById('anchorStageFaultWarning');
 
   if (stepLabel) stepLabel.textContent = `STAGE ${stage.step} OF ${ANCHOR_STAGES.length}`;
-  if (cadenceHint) cadenceHint.textContent = stage.cadenceLabel;
+  if (cadenceHint) cadenceHint.textContent = '4.0s Inhale • 0.5s Hold • 6.0s Exhale';
   if (playIcon) playIcon.textContent = state.anchor.isRunning ? '⏸' : '▶';
   if (playLabel) {
     playLabel.textContent = state.anchor.isRunning
-      ? 'Pause Timer'
+      ? 'Pause Session'
       : state.anchor.remainingSec < stage.durationSeconds
-      ? 'Resume'
-      : `Start Stage ${stage.step}`;
+      ? 'Resume Session'
+      : 'Start Session';
   }
 
   if (stageName) stageName.textContent = `${stage.step}. ${stage.name}`;
@@ -1075,6 +1170,11 @@ function renderAnchorTimerView() {
       .join('');
   }
   if (faultWarning) faultWarning.textContent = ` ${stage.faultWarning}`;
+
+  // If paused, ensure breathing sphere and phase label show idle/ready/paused
+  if (!state.anchor.isRunning) {
+    setBreathingPhase('idle');
+  }
 
   renderAnchorClockOnly();
 }
