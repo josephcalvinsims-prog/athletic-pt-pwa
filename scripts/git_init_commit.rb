@@ -63,18 +63,22 @@ class PureRubyGit
     tree_sha = build_tree(@root)
     raise "Failed to build root tree" unless tree_sha
 
+    # Check for existing parent commit
+    parent_ref_file = File.join(@git_dir, 'refs', 'heads', 'main')
+    parent_sha = File.exist?(parent_ref_file) ? File.read(parent_ref_file).strip : nil
+
     # Create Commit
     now = Time.now
     tz = now.strftime("%z")
     timestamp = "#{now.to_i} #{tz}"
-    commit_body = [
-      "tree #{tree_sha}",
-      "author #{author_name} <#{author_email}> #{timestamp}",
-      "committer #{author_name} <#{author_email}> #{timestamp}",
-      "",
-      message,
-      ""
-    ].join("\n")
+    commit_lines = ["tree #{tree_sha}"]
+    commit_lines << "parent #{parent_sha}" if parent_sha && !parent_sha.empty?
+    commit_lines << "author #{author_name} <#{author_email}> #{timestamp}"
+    commit_lines << "committer #{author_name} <#{author_email}> #{timestamp}"
+    commit_lines << ""
+    commit_lines << message
+    commit_lines << ""
+    commit_body = commit_lines.join("\n")
 
     commit_sha = write_object('commit', commit_body)
 
@@ -110,5 +114,5 @@ end
 
 git = PureRubyGit.new('.')
 commit_sha = git.init_and_commit(
-  message: "Verified PWA build: E2E tests passing, offline caching configured, GitHub Actions deployment ready"
+  message: "Fix tactile stepper buttons and segmented pill click handling via container event delegation"
 )

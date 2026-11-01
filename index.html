@@ -393,7 +393,10 @@
             <button
               type="button"
               id="scalpMinusBtn"
-              class="tactile-stepper-btn rounded-xl bg-slate-900 active:bg-slate-800 hover:bg-slate-800/90 border border-slate-700/80 text-xl font-bold text-slate-200 shrink-0 active:scale-90 transition shadow-sm"
+              data-metric="scalp"
+              data-symptom="scalp"
+              data-action="decrement"
+              class="tactile-stepper-btn rounded-xl bg-slate-900 active:bg-slate-800 hover:bg-slate-800/90 border border-slate-700/80 text-xl font-bold text-slate-200 shrink-0 active:scale-90 transition shadow-sm cursor-pointer select-none"
               aria-label="Decrease Scalp Pressure"
             >
               −
@@ -401,36 +404,45 @@
             <div class="flex-1 grid grid-cols-3 gap-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800 select-none">
               <button
                 type="button"
+                id="scalpPillCalm"
+                data-metric="scalp"
                 data-symptom="scalp"
                 data-zone="calm"
-                class="zone-pill-btn py-2 px-1 rounded-lg text-center font-bold text-xs border border-transparent transition active:scale-95 flex flex-col items-center justify-center gap-0.5"
+                class="zone-pill-btn py-2 px-1 rounded-lg text-center font-bold text-xs border border-transparent transition active:scale-95 flex flex-col items-center justify-center gap-0.5 cursor-pointer"
               >
-                <span class="text-[11px] leading-tight">Calm</span>
-                <span class="text-[9px] font-mono opacity-80">0–3</span>
+                <span class="text-[11px] leading-tight pointer-events-none">Calm</span>
+                <span class="text-[9px] font-mono opacity-80 pointer-events-none">0–3</span>
               </button>
               <button
                 type="button"
+                id="scalpPillCaution"
+                data-metric="scalp"
                 data-symptom="scalp"
                 data-zone="caution"
-                class="zone-pill-btn py-2 px-1 rounded-lg text-center font-bold text-xs border border-transparent transition active:scale-95 flex flex-col items-center justify-center gap-0.5"
+                class="zone-pill-btn py-2 px-1 rounded-lg text-center font-bold text-xs border border-transparent transition active:scale-95 flex flex-col items-center justify-center gap-0.5 cursor-pointer"
               >
-                <span class="text-[11px] leading-tight">Caution</span>
-                <span class="text-[9px] font-mono opacity-80">4–6</span>
+                <span class="text-[11px] leading-tight pointer-events-none">Caution</span>
+                <span class="text-[9px] font-mono opacity-80 pointer-events-none">4–6</span>
               </button>
               <button
                 type="button"
+                id="scalpPillFlare"
+                data-metric="scalp"
                 data-symptom="scalp"
                 data-zone="flare"
-                class="zone-pill-btn py-2 px-1 rounded-lg text-center font-bold text-xs border border-transparent transition active:scale-95 flex flex-col items-center justify-center gap-0.5"
+                class="zone-pill-btn py-2 px-1 rounded-lg text-center font-bold text-xs border border-transparent transition active:scale-95 flex flex-col items-center justify-center gap-0.5 cursor-pointer"
               >
-                <span class="text-[11px] leading-tight">Flare</span>
-                <span class="text-[9px] font-mono opacity-80">7–10</span>
+                <span class="text-[11px] leading-tight pointer-events-none">Flare</span>
+                <span class="text-[9px] font-mono opacity-80 pointer-events-none">7–10</span>
               </button>
             </div>
             <button
               type="button"
               id="scalpPlusBtn"
-              class="tactile-stepper-btn rounded-xl bg-slate-900 active:bg-slate-800 hover:bg-slate-800/90 border border-slate-700/80 text-xl font-bold text-slate-200 shrink-0 active:scale-90 transition shadow-sm"
+              data-metric="scalp"
+              data-symptom="scalp"
+              data-action="increment"
+              class="tactile-stepper-btn rounded-xl bg-slate-900 active:bg-slate-800 hover:bg-slate-800/90 border border-slate-700/80 text-xl font-bold text-slate-200 shrink-0 active:scale-90 transition shadow-sm cursor-pointer select-none"
               aria-label="Increase Scalp Pressure"
             >
               +
@@ -462,7 +474,10 @@
             <button
               type="button"
               id="levatorMinusBtn"
-              class="tactile-stepper-btn rounded-xl bg-slate-900 active:bg-slate-800 hover:bg-slate-800/90 border border-slate-700/80 text-xl font-bold text-slate-200 shrink-0 active:scale-90 transition shadow-sm"
+              data-metric="levator"
+              data-symptom="levator"
+              data-action="decrement"
+              class="tactile-stepper-btn rounded-xl bg-slate-900 active:bg-slate-800 hover:bg-slate-800/90 border border-slate-700/80 text-xl font-bold text-slate-200 shrink-0 active:scale-90 transition shadow-sm cursor-pointer select-none"
               aria-label="Decrease Levator Tension"
             >
               −
@@ -470,36 +485,45 @@
             <div class="flex-1 grid grid-cols-3 gap-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800 select-none">
               <button
                 type="button"
+                id="levatorPillCalm"
+                data-metric="levator"
                 data-symptom="levator"
                 data-zone="calm"
-                class="zone-pill-btn py-2 px-1 rounded-lg text-center font-bold text-xs border border-transparent transition active:scale-95 flex flex-col items-center justify-center gap-0.5"
+                class="zone-pill-btn py-2 px-1 rounded-lg text-center font-bold text-xs border border-transparent transition active:scale-95 flex flex-col items-center justify-center gap-0.5 cursor-pointer"
               >
-                <span class="text-[11px] leading-tight">Calm</span>
-                <span class="text-[9px] font-mono opacity-80">0–3</span>
+                <span class="text-[11px] leading-tight pointer-events-none">Calm</span>
+                <span class="text-[9px] font-mono opacity-80 pointer-events-none">0–3</span>
               </button>
               <button
                 type="button"
+                id="levatorPillCaution"
+                data-metric="levator"
                 data-symptom="levator"
                 data-zone="caution"
-                class="zone-pill-btn py-2 px-1 rounded-lg text-center font-bold text-xs border border-transparent transition active:scale-95 flex flex-col items-center justify-center gap-0.5"
+                class="zone-pill-btn py-2 px-1 rounded-lg text-center font-bold text-xs border border-transparent transition active:scale-95 flex flex-col items-center justify-center gap-0.5 cursor-pointer"
               >
-                <span class="text-[11px] leading-tight">Caution</span>
-                <span class="text-[9px] font-mono opacity-80">4–6</span>
+                <span class="text-[11px] leading-tight pointer-events-none">Caution</span>
+                <span class="text-[9px] font-mono opacity-80 pointer-events-none">4–6</span>
               </button>
               <button
                 type="button"
+                id="levatorPillFlare"
+                data-metric="levator"
                 data-symptom="levator"
                 data-zone="flare"
-                class="zone-pill-btn py-2 px-1 rounded-lg text-center font-bold text-xs border border-transparent transition active:scale-95 flex flex-col items-center justify-center gap-0.5"
+                class="zone-pill-btn py-2 px-1 rounded-lg text-center font-bold text-xs border border-transparent transition active:scale-95 flex flex-col items-center justify-center gap-0.5 cursor-pointer"
               >
-                <span class="text-[11px] leading-tight">Flare</span>
-                <span class="text-[9px] font-mono opacity-80">7–10</span>
+                <span class="text-[11px] leading-tight pointer-events-none">Flare</span>
+                <span class="text-[9px] font-mono opacity-80 pointer-events-none">7–10</span>
               </button>
             </div>
             <button
               type="button"
               id="levatorPlusBtn"
-              class="tactile-stepper-btn rounded-xl bg-slate-900 active:bg-slate-800 hover:bg-slate-800/90 border border-slate-700/80 text-xl font-bold text-slate-200 shrink-0 active:scale-90 transition shadow-sm"
+              data-metric="levator"
+              data-symptom="levator"
+              data-action="increment"
+              class="tactile-stepper-btn rounded-xl bg-slate-900 active:bg-slate-800 hover:bg-slate-800/90 border border-slate-700/80 text-xl font-bold text-slate-200 shrink-0 active:scale-90 transition shadow-sm cursor-pointer select-none"
               aria-label="Increase Levator Tension"
             >
               +
@@ -531,7 +555,10 @@
             <button
               type="button"
               id="interscapMinusBtn"
-              class="tactile-stepper-btn rounded-xl bg-slate-900 active:bg-slate-800 hover:bg-slate-800/90 border border-slate-700/80 text-xl font-bold text-slate-200 shrink-0 active:scale-90 transition shadow-sm"
+              data-metric="interscap"
+              data-symptom="interscap"
+              data-action="decrement"
+              class="tactile-stepper-btn rounded-xl bg-slate-900 active:bg-slate-800 hover:bg-slate-800/90 border border-slate-700/80 text-xl font-bold text-slate-200 shrink-0 active:scale-90 transition shadow-sm cursor-pointer select-none"
               aria-label="Decrease Interscapular Soreness"
             >
               −
@@ -539,36 +566,45 @@
             <div class="flex-1 grid grid-cols-3 gap-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800 select-none">
               <button
                 type="button"
+                id="interscapPillCalm"
+                data-metric="interscap"
                 data-symptom="interscap"
                 data-zone="calm"
-                class="zone-pill-btn py-2 px-1 rounded-lg text-center font-bold text-xs border border-transparent transition active:scale-95 flex flex-col items-center justify-center gap-0.5"
+                class="zone-pill-btn py-2 px-1 rounded-lg text-center font-bold text-xs border border-transparent transition active:scale-95 flex flex-col items-center justify-center gap-0.5 cursor-pointer"
               >
-                <span class="text-[11px] leading-tight">Calm</span>
-                <span class="text-[9px] font-mono opacity-80">0–3</span>
+                <span class="text-[11px] leading-tight pointer-events-none">Calm</span>
+                <span class="text-[9px] font-mono opacity-80 pointer-events-none">0–3</span>
               </button>
               <button
                 type="button"
+                id="interscapPillCaution"
+                data-metric="interscap"
                 data-symptom="interscap"
                 data-zone="caution"
-                class="zone-pill-btn py-2 px-1 rounded-lg text-center font-bold text-xs border border-transparent transition active:scale-95 flex flex-col items-center justify-center gap-0.5"
+                class="zone-pill-btn py-2 px-1 rounded-lg text-center font-bold text-xs border border-transparent transition active:scale-95 flex flex-col items-center justify-center gap-0.5 cursor-pointer"
               >
-                <span class="text-[11px] leading-tight">Caution</span>
-                <span class="text-[9px] font-mono opacity-80">4–6</span>
+                <span class="text-[11px] leading-tight pointer-events-none">Caution</span>
+                <span class="text-[9px] font-mono opacity-80 pointer-events-none">4–6</span>
               </button>
               <button
                 type="button"
+                id="interscapPillFlare"
+                data-metric="interscap"
                 data-symptom="interscap"
                 data-zone="flare"
-                class="zone-pill-btn py-2 px-1 rounded-lg text-center font-bold text-xs border border-transparent transition active:scale-95 flex flex-col items-center justify-center gap-0.5"
+                class="zone-pill-btn py-2 px-1 rounded-lg text-center font-bold text-xs border border-transparent transition active:scale-95 flex flex-col items-center justify-center gap-0.5 cursor-pointer"
               >
-                <span class="text-[11px] leading-tight">Flare</span>
-                <span class="text-[9px] font-mono opacity-80">7–10</span>
+                <span class="text-[11px] leading-tight pointer-events-none">Flare</span>
+                <span class="text-[9px] font-mono opacity-80 pointer-events-none">7–10</span>
               </button>
             </div>
             <button
               type="button"
               id="interscapPlusBtn"
-              class="tactile-stepper-btn rounded-xl bg-slate-900 active:bg-slate-800 hover:bg-slate-800/90 border border-slate-700/80 text-xl font-bold text-slate-200 shrink-0 active:scale-90 transition shadow-sm"
+              data-metric="interscap"
+              data-symptom="interscap"
+              data-action="increment"
+              class="tactile-stepper-btn rounded-xl bg-slate-900 active:bg-slate-800 hover:bg-slate-800/90 border border-slate-700/80 text-xl font-bold text-slate-200 shrink-0 active:scale-90 transition shadow-sm cursor-pointer select-none"
               aria-label="Increase Interscapular Soreness"
             >
               +

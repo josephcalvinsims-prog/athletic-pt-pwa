@@ -100,7 +100,7 @@ const ANCHOR_RING_CIRCUMFERENCE = 2 * Math.PI * 96; // r=96 -> 603.19
 /* ==========================================================================
    BOOTSTRAP & LIFECYCLE INITIALIZATION
    ========================================================================== */
-document.addEventListener('DOMContentLoaded', async () => {
+async function initApp() {
   try {
     await openDatabase();
     registerServiceWorker();
@@ -129,7 +129,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error('Initialization error:', err);
     showToast(`Init warning: ${err.message}`);
   }
-});
+}
+
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+  } else {
+    // DOM already parsed (deferred ES module execution)
+    initApp();
+  }
+}
 
 async function reloadAllData() {
   state.todayStr = getLocalDateString();
@@ -334,24 +343,38 @@ function bindDashboardEvents() {
     showToast('48-Hour Post-Bodywork Countdown Activated');
   });
 
-  // 3-Zone Segmented Pill & Stepper Buttons for Scalp, Levator, and Interscapular
-  ['scalp', 'levator', 'interscap'].forEach((key) => {
-    document.getElementById(`${key}MinusBtn`)?.addEventListener('click', () => {
-      setSymptomValue(key, symptomValues[key] - 1, true);
-    });
-    document.getElementById(`${key}PlusBtn`)?.addEventListener('click', () => {
-      setSymptomValue(key, symptomValues[key] + 1, true);
-    });
-  });
+  // 3-Zone Segmented Pill & Stepper Buttons: Event Delegation on Card Container
+  const checkinCard = document.getElementById('checkinCardShell');
+  if (checkinCard) {
+    checkinCard.addEventListener('click', (e) => {
+      // 1. Tactile Stepper (+ / -)
+      const actionBtn = e.target.closest('[data-action]');
+      if (actionBtn && checkinCard.contains(actionBtn)) {
+        e.preventDefault();
+        const metric = actionBtn.dataset.metric || actionBtn.dataset.symptom;
+        const action = actionBtn.dataset.action;
+        if (metric && (action === 'increment' || action === 'decrement')) {
+          const currentVal = Number(symptomValues[metric] ?? 2);
+          const delta = action === 'increment' ? 1 : -1;
+          setSymptomValue(metric, currentVal + delta, true);
+          return;
+        }
+      }
 
-  document.querySelectorAll('.zone-pill-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const sym = btn.dataset.symptom;
-      const zone = btn.dataset.zone;
-      const targetVal = zone === 'calm' ? 2 : zone === 'caution' ? 5 : 8;
-      setSymptomValue(sym, targetVal, true);
+      // 2. 3-Zone Segmented Pill (Calm / Caution / Flare)
+      const zoneBtn = e.target.closest('[data-zone]');
+      if (zoneBtn && checkinCard.contains(zoneBtn)) {
+        e.preventDefault();
+        const metric = zoneBtn.dataset.metric || zoneBtn.dataset.symptom;
+        const zone = zoneBtn.dataset.zone;
+        if (metric && zone) {
+          const targetVal = zone === 'calm' ? 2 : zone === 'caution' ? 5 : 8;
+          setSymptomValue(metric, targetVal, true);
+          return;
+        }
+      }
     });
-  });
+  }
 
   // Backward compatibility with programmatic range input events (e.g. automated tests)
   document.getElementById('scalpSlider')?.addEventListener('input', (e) => {
@@ -366,7 +389,7 @@ function bindDashboardEvents() {
     setSymptomValue('levator', e.target.value, true);
   });
 
-  radicularToggle?.addEventListener('change', () => {
+  document.getElementById('radicularToggle')?.addEventListener('change', () => {
     triggerHapticFeedback();
     renderLiveTrafficLightEvaluation();
     triggerOptimisticAutoSave();
@@ -624,7 +647,7 @@ function updateSymptomUI(symptomKey, value) {
   }
 
   // Highlight active zone segmented pill
-  document.querySelectorAll(`.zone-pill-btn[data-symptom="${symptomKey}"]`).forEach((btn) => {
+  document.querySelectorAll(`.zone-pill-btn[data-symptom="${symptomKey}"], .zone-pill-btn[data-metric="${symptomKey}"]`).forEach((btn) => {
     const btnZone = btn.dataset.zone;
     btn.classList.remove('zone-calm-active', 'zone-caution-active', 'zone-flare-active');
     if (btnZone === zone) {

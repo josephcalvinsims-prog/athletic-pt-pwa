@@ -235,9 +235,10 @@ begin
   driver.call("Page.enable")
   driver.call("Runtime.enable")
   driver.call("Network.enable")
+  driver.call("Page.navigate", { url: "http://127.0.0.1:#{PORT}" })
 
   # Wait for page load and initial indexedDB & charts hydration
-  sleep 2.0
+  sleep 2.5
 
   # Gather console errors and failed network requests
   events = driver.drain_events
@@ -251,6 +252,10 @@ begin
         text = e.dig('params', 'args', 0, 'value') || e.dig('params', 'args', 0, 'description')
         console_errors << text
       end
+    elsif e['method'] == 'Runtime.exceptionThrown'
+      desc = e.dig('params', 'exceptionDetails', 'text') || ''
+      desc += ' ' + (e.dig('params', 'exceptionDetails', 'exception', 'description') || '')
+      console_errors << "Uncaught: #{desc}"
     elsif e['method'] == 'Network.responseReceived'
       status = e.dig('params', 'response', 'status')
       url = e.dig('params', 'response', 'url')
