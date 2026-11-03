@@ -114,5 +114,5 @@ end
 
 git = PureRubyGit.new('.')
 commit_sha = git.init_and_commit(
-  message: "Refactor Alpha Progression aesthetic, workout visual technique cards, and Web Audio breathwork engine"
+  message: "Fix iOS Safari and mobile PWA Web Audio silent playback with lazy init, gesture unlock, and feedback blips"
 )

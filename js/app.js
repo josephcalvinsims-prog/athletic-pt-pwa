@@ -50,7 +50,7 @@ import {
   VoiceDictationController
 } from './ai-consultant.js';
 
-import { audioEngine } from './audio.js';
+import { audioEngine, initOrResumeAudio } from './audio.js';
 
 /* ==========================================================================
    CENTRAL APPLICATION STATE
@@ -252,6 +252,7 @@ export function switchTab(tabName) {
 if (typeof window !== 'undefined') {
   window.switchTab = switchTab;
   window.audioEngine = audioEngine;
+  window.initOrResumeAudio = initOrResumeAudio;
 }
 
 function renderHeaderDate() {
@@ -986,19 +987,23 @@ function startBreathingCycle() {
 }
 
 function bindAnchorTimerEvents() {
-  // Mobile audio unlocking
+  // Mobile audio unlocking on first user interaction
   if (typeof window !== 'undefined') {
-    const unlockAudio = () => {
-      audioEngine.init();
+    const unlockAudio = async () => {
+      await audioEngine.initOrResumeAudio();
       window.removeEventListener('click', unlockAudio);
       window.removeEventListener('touchstart', unlockAudio);
+      window.removeEventListener('touchend', unlockAudio);
     };
     window.addEventListener('click', unlockAudio, { once: true });
     window.addEventListener('touchstart', unlockAudio, { once: true });
+    window.addEventListener('touchend', unlockAudio, { once: true });
   }
 
+  // Start / Pause Anchor Session Button
   document.getElementById('anchorPlayPauseBtn')?.addEventListener('click', () => {
-    audioEngine.init();
+    // Explicitly resume / unlock audio immediately as the very first line of user gesture handler
+    initOrResumeAudio();
     if (state.anchor.isRunning) {
       pauseAnchorTimer();
     } else {
@@ -1027,26 +1032,38 @@ function bindAnchorTimerEvents() {
   });
 
   // Master Sound Toggle
-  document.getElementById('anchorSoundToggleBtn')?.addEventListener('click', () => {
-    audioEngine.init();
+  document.getElementById('anchorSoundToggleBtn')?.addEventListener('click', async () => {
+    await audioEngine.initOrResumeAudio();
     state.anchor.soundEnabled = !state.anchor.soundEnabled;
     audioEngine.setSoundEnabled(state.anchor.soundEnabled);
     const label = document.getElementById('anchorSoundLabel');
     if (label) {
       label.textContent = state.anchor.soundEnabled ? '🔔 Tones On' : '🔕 Muted';
     }
+    if (state.anchor.soundEnabled) {
+      audioEngine.playFeedbackBlip(528, 0.08);
+    }
     showToast(state.anchor.soundEnabled ? 'Breathwork audio tones on' : 'Breathwork audio muted');
   });
 
-  // Audio Volume Slider
-  document.getElementById('anchorVolumeSlider')?.addEventListener('input', (e) => {
-    audioEngine.setVolume(e.target.value);
+  // Audio Volume Slider with tactile 440 Hz test feedback blip
+  let volumeFeedbackTimer = null;
+  document.getElementById('anchorVolumeSlider')?.addEventListener('input', async (e) => {
+    const val = parseFloat(e.target.value);
+    audioEngine.setVolume(val);
+    if (state.anchor.soundEnabled) {
+      clearTimeout(volumeFeedbackTimer);
+      volumeFeedbackTimer = setTimeout(async () => {
+        await audioEngine.initOrResumeAudio();
+        audioEngine.playFeedbackBlip(440, 0.06);
+      }, 70);
+    }
   });
 
   // Ambient "Eyes-Closed Mode" Screen Dimmer
   const ambientModal = document.getElementById('anchorAmbientDimmerModal');
   document.getElementById('anchorEyesClosedBtn')?.addEventListener('click', () => {
-    audioEngine.init();
+    initOrResumeAudio();
     if (!state.anchor.isRunning) {
       startAnchorTimer();
     }
@@ -1078,16 +1095,20 @@ function jumpToAnchorStage(stageIdx) {
   }
 }
 
-async function startAnchorTimer() {
+function startAnchorTimer() {
   if (state.anchor.isRunning) return;
-
-  // Prime Web Audio context on user gesture
-  audioEngine.init();
-  audioEngine.playRoundBell();
-  await requestScreenWakeLock();
 
   state.anchor.isRunning = true;
   state.anchor.endTimestampMs = Date.now() + state.anchor.remainingSec * 1000;
+
+  // Prime Web Audio context directly within user gesture pipeline
+  initOrResumeAudio()
+    .then(() => {
+      audioEngine.playRoundBell();
+    })
+    .catch(() => {});
+
+  requestScreenWakeLock().catch(() => {});
 
   // Start smooth sensory breathing cadence pacer + audio tones
   startBreathingCycle();

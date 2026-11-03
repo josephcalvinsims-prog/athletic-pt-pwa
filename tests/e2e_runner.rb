@@ -618,11 +618,13 @@ begin
   sleep 0.3
 
   audio_and_dimmer_result = driver.eval_js(<<~JS)
-    (() => {
+    new Promise(async (resolve) => {
       const audioExists = Boolean(window.audioEngine);
       let audioMuted = false;
       let audioUnmuted = false;
       let volumeSet = false;
+      let initOrResumeWorked = false;
+      let feedbackBlipWorked = false;
 
       if (audioExists) {
         window.audioEngine.setSoundEnabled(false);
@@ -631,12 +633,24 @@ begin
         audioUnmuted = window.audioEngine.soundEnabled;
         window.audioEngine.setVolume(0.42);
         volumeSet = Math.abs(window.audioEngine.volume - 0.42) < 0.01;
+
+        try {
+          const ctx = await window.audioEngine.initOrResumeAudio();
+          initOrResumeWorked = Boolean(ctx);
+          await window.audioEngine.playFeedbackBlip(440, 0.04);
+          feedbackBlipWorked = true;
+        } catch (e) {
+          console.error('Audio test call failed:', e);
+        }
       }
+
+      // Check iPhone silent switch tip in DOM
+      const pageText = document.body.textContent || '';
+      const hasIphoneTip = pageText.includes("physical Ring/Silent switch isn't on Silent");
 
       // Test Ambient Dimmer Mode
       const eyesClosedBtn = document.getElementById('anchorEyesClosedBtn');
       const dimmerModal = document.getElementById('anchorAmbientDimmerModal');
-      const dimmerCloseBtn = document.getElementById('ambientDimmerCloseBtn');
 
       const modalInitiallyHidden = dimmerModal ? dimmerModal.classList.contains('hidden') : false;
       
@@ -652,26 +666,33 @@ begin
       const playBtn = document.getElementById('anchorPlayPauseBtn');
       if (playBtn && playBtn.textContent.includes('Pause')) playBtn.click();
 
-      return {
+      resolve({
         audioExists,
         audioMuted,
         audioUnmuted,
         volumeSet,
+        initOrResumeWorked,
+        feedbackBlipWorked,
+        hasIphoneTip,
         modalInitiallyHidden,
         modalOpened,
         modalClosed
-      };
-    })()
+      });
+    });
   JS
 
   puts "  AudioEngine exists: #{audio_and_dimmer_result['audioExists']}"
   puts "  Audio mute/unmute/volume controls: #{audio_and_dimmer_result['audioMuted']} / #{audio_and_dimmer_result['audioUnmuted']} / #{audio_and_dimmer_result['volumeSet']}"
+  puts "  initOrResumeAudio / feedback blip: #{audio_and_dimmer_result['initOrResumeWorked']} / #{audio_and_dimmer_result['feedbackBlipWorked']}"
+  puts "  iPhone silent switch advisory tip present: #{audio_and_dimmer_result['hasIphoneTip']}"
   puts "  Eyes-Closed Dimmer overlay toggle: Initial #{audio_and_dimmer_result['modalInitiallyHidden']} -> Open: #{audio_and_dimmer_result['modalOpened']} -> Close: #{audio_and_dimmer_result['modalClosed']}"
 
   raise "AudioEngine missing on window" unless audio_and_dimmer_result['audioExists']
   raise "AudioEngine volume/mute controls failed" unless audio_and_dimmer_result['audioMuted'] && audio_and_dimmer_result['audioUnmuted'] && audio_and_dimmer_result['volumeSet']
+  raise "initOrResumeAudio or feedback blip failed" unless audio_and_dimmer_result['initOrResumeWorked'] && audio_and_dimmer_result['feedbackBlipWorked']
+  raise "iPhone silent switch tip missing from Daily Anchor" unless audio_and_dimmer_result['hasIphoneTip']
   raise "Eyes-Closed ambient dimmer failed to open or close" unless audio_and_dimmer_result['modalOpened'] && audio_and_dimmer_result['modalClosed']
-  puts "  [PASS] Alpha Progression visual cards, 3-way tabs, audio engine, and eyes-closed dimmer mode verified."
+  puts "  [PASS] Alpha Progression visual cards, 3-way tabs, audio engine, iOS unlock helper, and eyes-closed dimmer mode verified."
 
   # =========================================================================
   # TEST D: Cycle through all 5 navigation tabs twice (Chart.js redrawing & no canvas collision)
