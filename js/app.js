@@ -50,6 +50,8 @@ import {
   VoiceDictationController
 } from './ai-consultant.js';
 
+import { audioEngine } from './audio.js';
+
 /* ==========================================================================
    CENTRAL APPLICATION STATE
    ========================================================================== */
@@ -249,6 +251,7 @@ export function switchTab(tabName) {
 }
 if (typeof window !== 'undefined') {
   window.switchTab = switchTab;
+  window.audioEngine = audioEngine;
 }
 
 function renderHeaderDate() {
@@ -896,9 +899,14 @@ function setBreathingPhase(phase) {
   state.anchor.breathPhase = phase;
   const sphere = document.getElementById('sensoryBreathSphere');
   const phaseLabel = document.getElementById('anchorBreathPhaseLabel');
+  const ambPhase = document.getElementById('ambientPhaseLabel');
 
   if (sphere) {
     sphere.className = `sensory-breath-sphere breath-${phase} absolute inset-2 rounded-full border-2 transition-all pointer-events-none`;
+  }
+
+  if (ambPhase) {
+    ambPhase.textContent = phase === 'idle' ? 'REST & PREPARE' : phase.toUpperCase();
   }
 
   if (phaseLabel) {
@@ -927,8 +935,10 @@ function startBreathingCycle() {
   clearBreathingCycle();
   if (!state.anchor.isRunning) return;
 
-  // 1. INHALE (4.0s): Smooth scale-up from 0.85 to 1.15, soft teal/emerald glow
+  // 1. INHALE (4.0s): Smooth scale-up from 0.85 to 1.15, upward sweeping harmonic tone (220 Hz -> 330 Hz)
   setBreathingPhase('inhale');
+  audioEngine.playInhaleTone(4.0);
+
   // Inhale inflection: single gentle pulse (20ms)
   if (typeof navigator !== 'undefined' && navigator.vibrate) {
     try {
@@ -941,14 +951,17 @@ function startBreathingCycle() {
   const holdTimeout = setTimeout(() => {
     if (!state.anchor.isRunning) return;
 
-    // 2. PAUSE / HOLD (0.5s): Hold at top
+    // 2. PAUSE / HOLD (0.5s): Hold at top with subtle warm hum (261 Hz)
     setBreathingPhase('hold');
+    audioEngine.playHoldTone(0.5);
 
     const exhaleTimeout = setTimeout(() => {
       if (!state.anchor.isRunning) return;
 
-      // 3. EXHALE (6.0s): Smooth scale-down back to 0.85, calming fade
+      // 3. EXHALE (6.0s): Smooth scale-down back to 0.85, relaxing downward sweep (330 Hz -> 196 Hz)
       setBreathingPhase('exhale');
+      audioEngine.playExhaleTone(6.0);
+
       // Exhale inflection: soft double pulse ([25, 40, 25]ms)
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
         try {
@@ -973,7 +986,19 @@ function startBreathingCycle() {
 }
 
 function bindAnchorTimerEvents() {
+  // Mobile audio unlocking
+  if (typeof window !== 'undefined') {
+    const unlockAudio = () => {
+      audioEngine.init();
+      window.removeEventListener('click', unlockAudio);
+      window.removeEventListener('touchstart', unlockAudio);
+    };
+    window.addEventListener('click', unlockAudio, { once: true });
+    window.addEventListener('touchstart', unlockAudio, { once: true });
+  }
+
   document.getElementById('anchorPlayPauseBtn')?.addEventListener('click', () => {
+    audioEngine.init();
     if (state.anchor.isRunning) {
       pauseAnchorTimer();
     } else {
@@ -984,6 +1009,7 @@ function bindAnchorTimerEvents() {
   document.getElementById('anchorResetBtn')?.addEventListener('click', () => {
     pauseAnchorTimer();
     clearBreathingCycle();
+    audioEngine.stopActiveTones();
     state.anchor.stageIndex = 0;
     state.anchor.remainingSec = ANCHOR_STAGES[0].durationSeconds;
     setBreathingPhase('idle');
@@ -1000,12 +1026,37 @@ function bindAnchorTimerEvents() {
     jumpToAnchorStage(nextIdx);
   });
 
+  // Master Sound Toggle
   document.getElementById('anchorSoundToggleBtn')?.addEventListener('click', () => {
+    audioEngine.init();
     state.anchor.soundEnabled = !state.anchor.soundEnabled;
+    audioEngine.setSoundEnabled(state.anchor.soundEnabled);
     const label = document.getElementById('anchorSoundLabel');
     if (label) {
-      label.textContent = state.anchor.soundEnabled ? '🔔 Chime On' : '🔕 Muted';
+      label.textContent = state.anchor.soundEnabled ? '🔔 Tones On' : '🔕 Muted';
     }
+    showToast(state.anchor.soundEnabled ? 'Breathwork audio tones on' : 'Breathwork audio muted');
+  });
+
+  // Audio Volume Slider
+  document.getElementById('anchorVolumeSlider')?.addEventListener('input', (e) => {
+    audioEngine.setVolume(e.target.value);
+  });
+
+  // Ambient "Eyes-Closed Mode" Screen Dimmer
+  const ambientModal = document.getElementById('anchorAmbientDimmerModal');
+  document.getElementById('anchorEyesClosedBtn')?.addEventListener('click', () => {
+    audioEngine.init();
+    if (!state.anchor.isRunning) {
+      startAnchorTimer();
+    }
+    ambientModal?.classList.remove('hidden');
+    setTimeout(() => ambientModal?.classList.add('dimmed'), 50);
+  });
+
+  ambientModal?.addEventListener('click', () => {
+    ambientModal.classList.remove('dimmed');
+    ambientModal.classList.add('hidden');
   });
 
   document.getElementById('markAnchorCompleteManualBtn')?.addEventListener('click', async () => {
@@ -1017,6 +1068,7 @@ function jumpToAnchorStage(stageIdx) {
   const wasRunning = state.anchor.isRunning;
   pauseAnchorTimer();
   clearBreathingCycle();
+  audioEngine.stopActiveTones();
   state.anchor.stageIndex = stageIdx;
   state.anchor.remainingSec = ANCHOR_STAGES[stageIdx].durationSeconds;
   setBreathingPhase('idle');
@@ -1030,13 +1082,14 @@ async function startAnchorTimer() {
   if (state.anchor.isRunning) return;
 
   // Prime Web Audio context on user gesture
-  playClinicalChime('start');
+  audioEngine.init();
+  audioEngine.playRoundBell();
   await requestScreenWakeLock();
 
   state.anchor.isRunning = true;
   state.anchor.endTimestampMs = Date.now() + state.anchor.remainingSec * 1000;
 
-  // Start smooth sensory breathing cadence pacer
+  // Start smooth sensory breathing cadence pacer + audio tones
   startBreathingCycle();
 
   state.anchor.intervalId = setInterval(() => {
@@ -1062,6 +1115,7 @@ function pauseAnchorTimer() {
   state.anchor.isRunning = false;
   state.anchor.endTimestampMs = null;
   clearBreathingCycle();
+  audioEngine.stopActiveTones();
   setBreathingPhase('idle');
   releaseScreenWakeLock();
   renderAnchorTimerView();
@@ -1069,12 +1123,22 @@ function pauseAnchorTimer() {
 
 async function advanceAnchorStageOrFinish() {
   clearBreathingCycle();
+  audioEngine.stopActiveTones();
+
   if (state.anchor.stageIndex < ANCHOR_STAGES.length - 1) {
     state.anchor.stageIndex += 1;
     const nextStage = ANCHOR_STAGES[state.anchor.stageIndex];
     state.anchor.remainingSec = nextStage.durationSeconds;
     state.anchor.endTimestampMs = Date.now() + nextStage.durationSeconds * 1000;
-    playClinicalChime('stage');
+
+    // Resonant meditation bell + mobile haptic pulse on stage switch
+    audioEngine.playRoundBell();
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      try {
+        navigator.vibrate([40, 60, 40]);
+      } catch {}
+    }
+
     startBreathingCycle();
     renderAnchorTimerView();
     showToast(`Stage ${nextStage.step}: ${nextStage.name}`);
@@ -1082,7 +1146,7 @@ async function advanceAnchorStageOrFinish() {
     pauseAnchorTimer();
     state.anchor.stageIndex = 0;
     state.anchor.remainingSec = ANCHOR_STAGES[0].durationSeconds;
-    playClinicalChime('complete');
+    audioEngine.playRoutineCompleteChime();
     await completeAnchorRoutineForToday();
     renderAnchorTimerView();
   }
@@ -1187,6 +1251,14 @@ function renderAnchorClockOnly() {
   const mins = String(Math.floor(state.anchor.remainingSec / 60)).padStart(2, '0');
   const secs = String(state.anchor.remainingSec % 60).padStart(2, '0');
   if (timeEl) timeEl.textContent = `${mins}:${secs}`;
+
+  const ambTime = document.getElementById('ambientTimeDisplay');
+  if (ambTime) ambTime.textContent = `${mins}:${secs}`;
+
+  const ambStage = document.getElementById('ambientStageLabel');
+  if (ambStage) {
+    ambStage.textContent = `Stage ${stage.step} of ${ANCHOR_STAGES.length} • ${stage.name}`;
+  }
 
   if (ringCircle) {
     const fractionRemaining = state.anchor.remainingSec / stage.durationSeconds;
@@ -1433,6 +1505,171 @@ function renderWorkoutReadinessBanner() {
   }
 }
 
+function renderExerciseVisualSvg(ex) {
+  const targetColor = '#10B981'; // emerald
+  const targetGlow = 'rgba(16, 185, 129, 0.4)';
+  const neckColor = '#64748B';   // slate-500
+  const bodyColor = '#94A3B8';   // slate-400
+  const benchColor = '#334155';  // slate-700
+  const id = ex.id;
+
+  let visualContent = '';
+
+  if (id === 'cable-er-iso') {
+    visualContent = `
+      <line x1="40" y1="110" x2="160" y2="110" stroke="#38BDF8" stroke-width="2.5" stroke-dasharray="4 2"/>
+      <circle cx="40" cy="110" r="5" fill="#38BDF8"/>
+      <ellipse cx="230" cy="120" rx="20" ry="42" fill="#1E293B" stroke="${bodyColor}" stroke-width="2.5"/>
+      <line x1="230" y1="78" x2="230" y2="60" stroke="${neckColor}" stroke-width="6" stroke-linecap="round"/>
+      <circle cx="230" cy="46" r="14" fill="#1E293B" stroke="${bodyColor}" stroke-width="2.5"/>
+      <rect x="214" y="112" width="10" height="18" rx="4" fill="#F59E0B" opacity="0.9"/>
+      <line x1="225" y1="90" x2="225" y2="125" stroke="${bodyColor}" stroke-width="6" stroke-linecap="round"/>
+      <line x1="225" y1="125" x2="160" y2="110" stroke="${bodyColor}" stroke-width="5" stroke-linecap="round"/>
+      <ellipse cx="238" cy="98" rx="9" ry="14" fill="${targetColor}" opacity="0.85" filter="drop-shadow(0 0 6px ${targetGlow})"/>
+      <path d="M 185 130 A 25 25 0 0 0 160 108" fill="none" stroke="#10B981" stroke-width="2" stroke-dasharray="3 2"/>
+      <polygon points="156,112 163,107 165,114" fill="#10B981"/>
+      <text x="280" y="102" fill="#10B981" font-size="11" font-weight="800">ROTATOR CUFF</text>
+      <text x="280" y="117" fill="#64748B" font-size="9" font-weight="600">Neck Slack (Zero Shrug)</text>
+    `;
+  } else if (id === 'serratus-wall-slides') {
+    visualContent = `
+      <line x1="280" y1="20" x2="280" y2="205" stroke="${benchColor}" stroke-width="8" stroke-linecap="square"/>
+      <path d="M 175 90 Q 185 130 180 180" stroke="${bodyColor}" stroke-width="14" fill="none" stroke-linecap="round"/>
+      <circle cx="185" cy="50" r="14" fill="#1E293B" stroke="${bodyColor}" stroke-width="2.5"/>
+      <line x1="185" y1="64" x2="183" y2="82" stroke="${neckColor}" stroke-width="5" stroke-linecap="round"/>
+      <path d="M 194 95 Q 212 110 206 135" stroke="#14B8A6" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.9" filter="drop-shadow(0 0 6px rgba(20,184,166,0.6))"/>
+      <line x1="192" y1="108" x2="218" y2="114" stroke="#14B8A6" stroke-width="3"/>
+      <line x1="190" y1="120" x2="214" y2="126" stroke="#14B8A6" stroke-width="3"/>
+      <line x1="186" y1="88" x2="235" y2="92" stroke="${bodyColor}" stroke-width="6" stroke-linecap="round"/>
+      <line x1="235" y1="92" x2="278" y2="72" stroke="${bodyColor}" stroke-width="6" stroke-linecap="round"/>
+      <line x1="288" y1="110" x2="288" y2="60" stroke="#14B8A6" stroke-width="3"/>
+      <polygon points="288,52 283,62 293,62" fill="#14B8A6"/>
+      <text x="60" y="112" fill="#14B8A6" font-size="11" font-weight="800">SERRATUS WRAPPERS</text>
+      <text x="60" y="127" fill="#64748B" font-size="9" font-weight="600">Ribs Wide • Neck Down</text>
+    `;
+  } else if (id === 'incline-prone-y') {
+    visualContent = `
+      <line x1="100" y1="180" x2="220" y2="90" stroke="${benchColor}" stroke-width="9" stroke-linecap="round"/>
+      <line x1="130" y1="160" x2="215" y2="95" stroke="${bodyColor}" stroke-width="14" stroke-linecap="round"/>
+      <circle cx="236" cy="80" r="13" fill="#1E293B" stroke="${bodyColor}" stroke-width="2.5"/>
+      <line x1="220" y1="90" x2="230" y2="84" stroke="${neckColor}" stroke-width="5"/>
+      <path d="M 185 108 L 198 120 L 175 125" stroke="#10B981" stroke-width="5" fill="none" opacity="0.9" filter="drop-shadow(0 0 6px ${targetGlow})"/>
+      <line x1="205" y1="96" x2="280" y2="48" stroke="#10B981" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="280" cy="48" r="4" fill="#10B981"/>
+      <polygon points="282,38 276,46 287,44" fill="#10B981"/>
+      <text x="50" y="70" fill="#10B981" font-size="11" font-weight="800">LOWER TRAP PULL</text>
+      <text x="50" y="85" fill="#64748B" font-size="9" font-weight="600">Chest Glued • Zero Upper Shrug</text>
+    `;
+  } else if (id === 'chest-supported-row') {
+    visualContent = `
+      <line x1="200" y1="65" x2="200" y2="160" stroke="${benchColor}" stroke-width="10" stroke-linecap="round"/>
+      <line x1="140" y1="165" x2="195" y2="165" stroke="${benchColor}" stroke-width="6"/>
+      <path d="M 180 85 L 180 155" stroke="${bodyColor}" stroke-width="15" stroke-linecap="round"/>
+      <circle cx="178" cy="48" r="14" fill="#1E293B" stroke="${bodyColor}" stroke-width="2.5"/>
+      <line x1="178" y1="62" x2="178" y2="78" stroke="${neckColor}" stroke-width="5"/>
+      <ellipse cx="170" cy="115" rx="8" ry="22" fill="${targetColor}" opacity="0.85" filter="drop-shadow(0 0 6px ${targetGlow})"/>
+      <line x1="180" y1="88" x2="135" y2="108" stroke="${bodyColor}" stroke-width="6" stroke-linecap="round"/>
+      <line x1="135" y1="108" x2="230" y2="115" stroke="#38BDF8" stroke-width="4" stroke-dasharray="3 2"/>
+      <circle cx="230" cy="115" r="5" fill="#38BDF8"/>
+      <line x1="135" y1="75" x2="135" y2="145" stroke="#F59E0B" stroke-width="1.5" stroke-dasharray="2 2"/>
+      <text x="120" y="68" fill="#F59E0B" font-size="9" font-weight="700">ROM STOP (Torso Line)</text>
+      <text x="250" y="90" fill="#10B981" font-size="11" font-weight="800">LATS &amp; RHOMBOIDS</text>
+      <text x="250" y="105" fill="#64748B" font-size="9" font-weight="600">Zero Neck Extension</text>
+    `;
+  } else if (id === 'dual-cable-high-low-row') {
+    visualContent = `
+      <circle cx="320" cy="45" r="7" fill="#38BDF8"/>
+      <line x1="320" y1="45" x2="225" y2="112" stroke="#38BDF8" stroke-width="2.5" stroke-dasharray="4 2"/>
+      <line x1="160" y1="100" x2="150" y2="175" stroke="${bodyColor}" stroke-width="14" stroke-linecap="round"/>
+      <circle cx="165" cy="58" r="14" fill="#1E293B" stroke="${bodyColor}" stroke-width="2.5"/>
+      <line x1="165" y1="72" x2="162" y2="92" stroke="${neckColor}" stroke-width="5"/>
+      <path d="M 152 110 Q 158 135 150 155" stroke="#10B981" stroke-width="9" fill="none" opacity="0.9" filter="drop-shadow(0 0 6px ${targetGlow})"/>
+      <line x1="160" y1="98" x2="195" y2="128" stroke="${bodyColor}" stroke-width="6" stroke-linecap="round"/>
+      <line x1="195" y1="128" x2="225" y2="112" stroke="${bodyColor}" stroke-width="5" stroke-linecap="round"/>
+      <polygon points="190,135 198,124 187,126" fill="#10B981"/>
+      <text x="50" y="95" fill="#10B981" font-size="11" font-weight="800">LOWER LATS BIAS</text>
+      <text x="50" y="110" fill="#64748B" font-size="9" font-weight="600">Pulls Down Away From Neck</text>
+    `;
+  } else if (id === 'half-kneeling-landmine-press') {
+    visualContent = `
+      <circle cx="80" cy="180" r="8" fill="${benchColor}"/>
+      <line x1="80" y1="180" x2="270" y2="70" stroke="#94A3B8" stroke-width="5"/>
+      <circle cx="270" cy="70" r="12" fill="#F59E0B" opacity="0.9"/>
+      <path d="M 180 110 L 175 160 M 175 160 L 155 195 M 175 160 L 210 195" stroke="${bodyColor}" stroke-width="8" stroke-linecap="round"/>
+      <circle cx="185" cy="70" r="13" fill="#1E293B" stroke="${bodyColor}" stroke-width="2.5"/>
+      <line x1="185" y1="83" x2="182" y2="102" stroke="${neckColor}" stroke-width="5"/>
+      <ellipse cx="192" cy="108" rx="8" ry="12" fill="#10B981" opacity="0.85" filter="drop-shadow(0 0 6px ${targetGlow})"/>
+      <line x1="184" y1="102" x2="235" y2="88" stroke="${bodyColor}" stroke-width="6" stroke-linecap="round"/>
+      <line x1="235" y1="88" x2="265" y2="72" stroke="${bodyColor}" stroke-width="5" stroke-linecap="round"/>
+      <path d="M 230 140 A 60 60 0 0 0 260 90" stroke="#38BDF8" stroke-width="1.5" stroke-dasharray="3 2" fill="none"/>
+      <text x="270" y="130" fill="#38BDF8" font-size="9" font-weight="700">60° NATURAL ARC</text>
+      <text x="60" y="60" fill="#10B981" font-size="11" font-weight="800">SERRATUS + DELT</text>
+      <text x="60" y="75" fill="#64748B" font-size="9" font-weight="600">Zero Overhead Impingement</text>
+    `;
+  } else if (id === 'dual-cable-incline-press') {
+    visualContent = `
+      <line x1="110" y1="165" x2="230" y2="95" stroke="${benchColor}" stroke-width="9" stroke-linecap="round"/>
+      <line x1="150" y1="140" x2="225" y2="98" stroke="${bodyColor}" stroke-width="14" stroke-linecap="round"/>
+      <circle cx="242" cy="85" r="13" fill="#1E293B" stroke="${bodyColor}" stroke-width="2.5"/>
+      <ellipse cx="215" cy="100" rx="10" ry="14" fill="#10B981" opacity="0.85" filter="drop-shadow(0 0 6px ${targetGlow})"/>
+      <circle cx="80" cy="130" r="5" fill="#38BDF8"/>
+      <line x1="80" y1="130" x2="190" y2="95" stroke="#38BDF8" stroke-width="2" stroke-dasharray="3 2"/>
+      <line x1="210" y1="98" x2="230" y2="52" stroke="${bodyColor}" stroke-width="5" stroke-linecap="round"/>
+      <text x="250" y="60" fill="#10B981" font-size="11" font-weight="800">CHEST &amp; SERRATUS</text>
+      <text x="250" y="75" fill="#64748B" font-size="9" font-weight="600">Elbows Forward • Safe Labrum</text>
+    `;
+  } else if (id === 'sled-push-backward-drag') {
+    visualContent = `
+      <line x1="30" y1="185" x2="370" y2="185" stroke="#10B981" stroke-width="3" stroke-dasharray="6 3"/>
+      <rect x="250" y="165" width="80" height="15" rx="3" fill="#334155"/>
+      <line x1="265" y1="170" x2="265" y2="85" stroke="#475569" stroke-width="6"/>
+      <line x1="295" y1="170" x2="295" y2="85" stroke="#475569" stroke-width="6"/>
+      <rect x="255" y="130" width="70" height="25" rx="4" fill="#F59E0B" opacity="0.8"/>
+      <line x1="140" y1="165" x2="185" y2="115" stroke="${bodyColor}" stroke-width="12" stroke-linecap="round"/>
+      <circle cx="198" cy="100" r="13" fill="#1E293B" stroke="${bodyColor}" stroke-width="2.5"/>
+      <line x1="190" y1="110" x2="265" y2="105" stroke="${bodyColor}" stroke-width="5" stroke-linecap="round"/>
+      <path d="M 140 165 L 110 185 M 150 150 L 165 185" stroke="#F59E0B" stroke-width="7" stroke-linecap="round" filter="drop-shadow(0 0 6px rgba(245,158,11,0.5))"/>
+      <text x="40" y="65" fill="#F59E0B" font-size="11" font-weight="800">ZERO SPINAL COMPRESSION</text>
+      <text x="40" y="80" fill="#10B981" font-size="9" font-weight="700">100% Quad &amp; Glute Output</text>
+    `;
+  } else if (id === 'db-goblet-squat') {
+    visualContent = `
+      <line x1="60" y1="195" x2="340" y2="195" stroke="${benchColor}" stroke-width="2"/>
+      <path d="M 195 95 L 195 140" stroke="${bodyColor}" stroke-width="14" stroke-linecap="round"/>
+      <circle cx="195" cy="58" r="14" fill="#1E293B" stroke="${bodyColor}" stroke-width="2.5"/>
+      <line x1="195" y1="72" x2="195" y2="88" stroke="${neckColor}" stroke-width="5"/>
+      <rect x="202" y="90" width="16" height="24" rx="4" fill="#38BDF8" stroke="#FFFFFF" stroke-width="1"/>
+      <path d="M 195 140 L 165 160 L 175 195 M 195 140 L 225 160 L 215 195" stroke="#F59E0B" stroke-width="8" stroke-linecap="round" filter="drop-shadow(0 0 6px rgba(245,158,11,0.5))"/>
+      <text x="245" y="85" fill="#10B981" font-size="11" font-weight="800">FRONT-LOADED CORE</text>
+      <text x="245" y="100" fill="#64748B" font-size="9" font-weight="600">Zero Barbell on Neck</text>
+    `;
+  } else {
+    visualContent = `
+      <line x1="60" y1="180" x2="340" y2="180" stroke="${benchColor}" stroke-width="4"/>
+      <circle cx="200" cy="65" r="14" fill="#1E293B" stroke="${bodyColor}" stroke-width="2.5"/>
+      <line x1="200" y1="80" x2="195" y2="135" stroke="${bodyColor}" stroke-width="12" stroke-linecap="round"/>
+      <path d="M 80 120 Q 140 70 200 120 T 320 120" fill="none" stroke="#10B981" stroke-width="3" stroke-dasharray="4 2" opacity="0.8" filter="drop-shadow(0 0 6px ${targetGlow})"/>
+      <text x="140" y="45" fill="#10B981" font-size="11" font-weight="800">AEROBIC FLUSH</text>
+      <text x="140" y="60" fill="#64748B" font-size="9" font-weight="600">Spine Supported • Natural Gait</text>
+    `;
+  }
+
+  return `
+    <svg viewBox="0 0 400 225" class="w-full h-full" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <defs>
+        <radialGradient id="grad-card-bg-${ex.id}" cx="50%" cy="50%" r="70%">
+          <stop offset="0%" stop-color="#14141E" />
+          <stop offset="100%" stop-color="#0A0A0E" />
+        </radialGradient>
+      </defs>
+      <rect width="400" height="225" fill="url(#grad-card-bg-${ex.id})" />
+      <line x1="0" y1="112.5" x2="400" y2="112.5" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+      <line x1="200" y1="0" x2="200" y2="225" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+      ${visualContent}
+    </svg>
+  `;
+}
+
 function renderCrossGatesLibrary() {
   const container = document.getElementById('cgExerciseLibraryList');
   if (!container) return;
@@ -1443,22 +1680,24 @@ function renderCrossGatesLibrary() {
   if (cat === 'blacklist') {
     BLACKLIST_MOVEMENTS.forEach((item) => {
       const card = document.createElement('div');
-      card.className = 'p-3.5 rounded-xl bg-rose-950/35 border border-rose-500/40 space-y-2';
+      card.className = 'card-alpha rounded-3xl p-4 bg-rose-950/20 border border-rose-500/40 space-y-3';
       card.innerHTML = `
         <div class="flex items-start justify-between gap-2">
           <div>
-            <span class="px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider bg-rose-500/25 text-rose-300 border border-rose-500/40">
+            <span class="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-rose-500/25 text-rose-300 border border-rose-500/40 shadow-sm">
               ${escapeHtml(item.riskTag)}
             </span>
-            <h4 class="text-sm font-extrabold text-white mt-1">⛔ ${escapeHtml(item.name)}</h4>
+            <h4 class="text-base font-extrabold text-white mt-1.5 flex items-center gap-1.5">
+              <span>⛔</span> <span>${escapeHtml(item.name)}</span>
+            </h4>
           </div>
         </div>
-        <p class="text-xs text-rose-100/90 leading-relaxed">${escapeHtml(item.clinicalWarning)}</p>
-        <div class="pt-1 flex items-center justify-between gap-2">
-          <span class="text-[11px] text-emerald-300 font-semibold">Safe Swap: ${escapeHtml(item.safeSwapName)}</span>
+        <p class="text-xs text-rose-200/90 leading-relaxed">${escapeHtml(item.clinicalWarning)}</p>
+        <div class="pt-2 flex items-center justify-between gap-2 border-t border-rose-500/20 flex-wrap">
+          <span class="text-xs text-emerald-300 font-bold">Safe Swap: ${escapeHtml(item.safeSwapName)}</span>
           <button
             type="button"
-            class="px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-xs font-bold shrink-0"
+            class="px-3.5 py-2 rounded-2xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-xs font-black shrink-0 cursor-pointer active:scale-95 transition"
           >
             + Queue Safe Swap
           </button>
@@ -1482,42 +1721,120 @@ function renderCrossGatesLibrary() {
 
   filtered.forEach((ex) => {
     const card = document.createElement('div');
-    card.className =
-      'p-3.5 rounded-xl bg-slate-950/85 border border-slate-800/90 flex flex-col gap-2';
+    card.className = 'card-alpha rounded-3xl p-4 space-y-3.5 transition-all';
+    card.dataset.exerciseId = ex.id;
 
     const yellowPill =
       isYellow && ex.yellowPriority
-        ? `<span class="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">YELLOW PRIORITY</span>`
+        ? `<span class="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm">YELLOW PRIORITY</span>`
         : '';
 
     card.innerHTML = `
-      <div class="flex items-start justify-between gap-2">
-        <div>
+      <!-- Dedicated 16:9 Visual Demonstration Container -->
+      <div class="exercise-visual-container">
+        ${renderExerciseVisualSvg(ex)}
+        <div class="absolute top-2.5 left-2.5 flex items-center gap-1.5 pointer-events-none">
+          <span class="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm backdrop-blur-sm">
+            Target: ${escapeHtml(ex.targetMuscles || 'Primary Target')}
+          </span>
+        </div>
+        <div class="absolute top-2.5 right-2.5 flex items-center gap-1.5 pointer-events-none">
+          <span class="px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-slate-900/80 text-slate-400 border border-white/10 backdrop-blur-sm">
+            Neck: Zero Strain
+          </span>
+        </div>
+      </div>
+
+      <!-- Exercise Header Info -->
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex-1">
           <div class="flex flex-wrap items-center gap-1.5">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400">${escapeHtml(ex.categoryLabel)}</span>
+            <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400">${escapeHtml(ex.categoryLabel)}</span>
             ${yellowPill}
           </div>
-          <h4 class="text-sm font-bold text-white mt-0.5">${escapeHtml(ex.name)}</h4>
-          <p class="text-[11px] text-slate-400">${escapeHtml(ex.equipment)}</p>
+          <h4 class="text-base font-extrabold text-white tracking-tight mt-0.5">${escapeHtml(ex.name)}</h4>
+          <p class="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
+            <span class="opacity-70">📍</span> ${escapeHtml(ex.setupEquipment || ex.equipment)}
+          </p>
         </div>
         <button
           type="button"
-          class="px-3 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-300 text-xs font-extrabold active:scale-95 transition shrink-0"
+          data-action="add-exercise"
+          class="add-exercise-btn px-3.5 py-2 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs active:scale-95 transition shadow-lg shadow-emerald-500/20 shrink-0 cursor-pointer"
         >
           + Add
         </button>
       </div>
-      <p class="text-xs text-slate-300 leading-relaxed">${escapeHtml(ex.clinicalCue)}</p>
+
+      <!-- 3-Way Pill Segmented Switcher (Alpha Progression Style) -->
+      <div class="flex items-center gap-1 p-1 rounded-2xl bg-[#0D0D12] border border-white/5 select-none">
+        <button type="button" class="exercise-tab-pill active flex-1 text-center" data-tab-target="technique" data-tab="technique">
+          Technique
+        </button>
+        <button type="button" class="exercise-tab-pill flex-1 text-center" data-tab-target="why" data-tab="why">
+          Why It Protects
+        </button>
+        <button type="button" class="exercise-tab-pill flex-1 text-center" data-tab-target="setup" data-tab="setup">
+          Setup &amp; Gear
+        </button>
+      </div>
+
+      <!-- Tab 1: Technique (3 Plain-English Action Cues) -->
+      <div class="exercise-pane pane-technique space-y-2">
+        <ul class="space-y-1.5 text-xs text-slate-200">
+          ${(ex.techniqueCues || [ex.clinicalCue]).map((cue, i) => `
+            <li class="flex items-start gap-2">
+              <span class="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">${i + 1}</span>
+              <span class="leading-relaxed">${escapeHtml(cue)}</span>
+            </li>
+          `).join('')}
+        </ul>
+      </div>
+
+      <!-- Tab 2: Why It Protects You (1-Sentence Safety Anchor) -->
+      <div class="exercise-pane pane-why hidden">
+        <div class="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 text-xs text-emerald-200 leading-relaxed flex items-start gap-2.5">
+          <span class="text-base shrink-0">🛡️</span>
+          <div>
+            <strong class="font-extrabold text-emerald-300 block mb-0.5">Clinical Safety Anchor</strong>
+            <span>${escapeHtml(ex.whyProtects || ex.clinicalCue)}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 3: Setup & Equipment (Cross Gates Specific) -->
+      <div class="exercise-pane pane-setup hidden">
+        <div class="p-3 rounded-2xl bg-white/5 border border-white/10 text-xs text-slate-300 space-y-1.5">
+          <div class="flex items-center justify-between text-[11px] font-semibold text-slate-400">
+            <span>Machine / Station:</span>
+            <span class="text-emerald-400 font-bold">${escapeHtml(ex.equipment)}</span>
+          </div>
+          <p class="leading-relaxed text-slate-200">${escapeHtml(ex.setupEquipment || ex.equipment)}</p>
+        </div>
+      </div>
+
       ${
         isYellow
-          ? `<p class="text-[11px] text-amber-300/95 bg-amber-500/10 border border-amber-500/25 rounded-lg px-2.5 py-1.5">
-               <strong>Yellow Mod:</strong> ${escapeHtml(ex.yellowNote)}
-             </p>`
+          ? `<div class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-[11px] text-amber-300">
+               <strong>Yellow Light Protocol:</strong> ${escapeHtml(ex.yellowNote)}
+             </div>`
           : ''
       }
     `;
 
-    card.querySelector('button')?.addEventListener('click', () => {
+    // 3-Way Pill Tab Switching
+    card.querySelectorAll('.exercise-tab-pill').forEach((pill) => {
+      pill.addEventListener('click', () => {
+        const target = pill.dataset.tabTarget;
+        card.querySelectorAll('.exercise-tab-pill').forEach((p) => p.classList.toggle('active', p === pill));
+        card.querySelector('.pane-technique')?.classList.toggle('hidden', target !== 'technique');
+        card.querySelector('.pane-why')?.classList.toggle('hidden', target !== 'why');
+        card.querySelector('.pane-setup')?.classList.toggle('hidden', target !== 'setup');
+      });
+    });
+
+    // Add to Workout Draft
+    card.querySelector('.add-exercise-btn')?.addEventListener('click', () => {
       state.workoutBuilder.draftExercises.push(createDraftRowFromLibrary(ex));
       renderActiveWorkoutDraft();
       showToast(`Added ${ex.name}`);

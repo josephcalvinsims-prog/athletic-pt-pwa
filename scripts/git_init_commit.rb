@@ -114,5 +114,5 @@ end
 
 git = PureRubyGit.new('.')
 commit_sha = git.init_and_commit(
-  message: "Implement Daily Anchor sensory breathing ring pacer and progressive disclosure accordions"
+  message: "Refactor Alpha Progression aesthetic, workout visual technique cards, and Web Audio breathwork engine"
 )

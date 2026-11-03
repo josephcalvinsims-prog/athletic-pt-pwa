@@ -540,6 +540,140 @@ begin
   puts "  [PASS] Sensory breathing ring expansion cadence, inflection haptic hooks, and progressive disclosure verified."
 
   # =========================================================================
+  # TEST C5: Alpha Progression Visual Technique Cards, 3-Way Tabs & Web Audio Breathwork
+  # =========================================================================
+  puts "\n[TEST C5] Testing Alpha Progression Visual Technique Cards & Ambient Dimmer Mode..."
+  
+  # 1. Test Workout Library Visuals & 3-Way Tab Switching
+  driver.eval_js("window.switchTab('workout');")
+  sleep 0.3
+
+  workout_visuals_result = driver.eval_js(<<~JS)
+    (() => {
+      const visualContainers = document.querySelectorAll('.exercise-visual-container');
+      const svgs = document.querySelectorAll('.exercise-visual-container svg');
+      const firstCard = document.querySelector('[data-exercise-id]');
+      if (!firstCard) {
+        return { error: 'No exercise cards found in library' };
+      }
+
+      const techniqueBtn = firstCard.querySelector('[data-tab="technique"]');
+      const whyBtn = firstCard.querySelector('[data-tab="why"]');
+      const setupBtn = firstCard.querySelector('[data-tab="setup"]');
+
+      const techniquePane = firstCard.querySelector('.pane-technique');
+      const whyPane = firstCard.querySelector('.pane-why');
+      const setupPane = firstCard.querySelector('.pane-setup');
+
+      const initialTechniqueVisible = techniquePane && !techniquePane.classList.contains('hidden');
+      const initialWhyHidden = whyPane && whyPane.classList.contains('hidden');
+
+      // Click "Why It Protects"
+      if (whyBtn) whyBtn.click();
+      const afterWhyClick = {
+        techniqueHidden: techniquePane && techniquePane.classList.contains('hidden'),
+        whyVisible: whyPane && !whyPane.classList.contains('hidden'),
+        setupHidden: setupPane && setupPane.classList.contains('hidden')
+      };
+
+      // Click "Setup & Gear"
+      if (setupBtn) setupBtn.click();
+      const afterSetupClick = {
+        techniqueHidden: techniquePane && techniquePane.classList.contains('hidden'),
+        whyHidden: whyPane && whyPane.classList.contains('hidden'),
+        setupVisible: setupPane && !setupPane.classList.contains('hidden')
+      };
+
+      // Click "+ Add" on first exercise
+      const addBtn = firstCard.querySelector('button[data-action="add-exercise"]');
+      const initialDraftRows = document.querySelectorAll('#activeWorkoutExercisesContainer [data-remove]').length;
+      if (addBtn) addBtn.click();
+      const newDraftRows = document.querySelectorAll('#activeWorkoutExercisesContainer [data-remove]').length;
+
+      return {
+        visualContainerCount: visualContainers.length,
+        svgCount: svgs.length,
+        initialTechniqueVisible,
+        initialWhyHidden,
+        afterWhyClick,
+        afterSetupClick,
+        draftAdded: newDraftRows > initialDraftRows
+      };
+    })()
+  JS
+
+  puts "  Visual containers found: #{workout_visuals_result['visualContainerCount']}, SVGs: #{workout_visuals_result['svgCount']}"
+  puts "  Why It Protects Tab Toggle: #{workout_visuals_result.dig('afterWhyClick', 'whyVisible')}"
+  puts "  Setup & Gear Tab Toggle: #{workout_visuals_result.dig('afterSetupClick', 'setupVisible')}"
+  puts "  Exercise Add to Draft: #{workout_visuals_result['draftAdded']}"
+
+  raise "Missing visual containers in exercise cards" unless workout_visuals_result['visualContainerCount'] > 0
+  raise "Missing visual SVG diagrams" unless workout_visuals_result['svgCount'] > 0
+  raise "Why tab toggle failed" unless workout_visuals_result.dig('afterWhyClick', 'whyVisible')
+  raise "Setup tab toggle failed" unless workout_visuals_result.dig('afterSetupClick', 'setupVisible')
+  raise "Adding exercise to draft failed" unless workout_visuals_result['draftAdded']
+
+  # 2. Test Audio Engine & Eyes-Closed Ambient Dimmer Mode
+  driver.eval_js("window.switchTab('anchor');")
+  sleep 0.3
+
+  audio_and_dimmer_result = driver.eval_js(<<~JS)
+    (() => {
+      const audioExists = Boolean(window.audioEngine);
+      let audioMuted = false;
+      let audioUnmuted = false;
+      let volumeSet = false;
+
+      if (audioExists) {
+        window.audioEngine.setSoundEnabled(false);
+        audioMuted = !window.audioEngine.soundEnabled;
+        window.audioEngine.setSoundEnabled(true);
+        audioUnmuted = window.audioEngine.soundEnabled;
+        window.audioEngine.setVolume(0.42);
+        volumeSet = Math.abs(window.audioEngine.volume - 0.42) < 0.01;
+      }
+
+      // Test Ambient Dimmer Mode
+      const eyesClosedBtn = document.getElementById('anchorEyesClosedBtn');
+      const dimmerModal = document.getElementById('anchorAmbientDimmerModal');
+      const dimmerCloseBtn = document.getElementById('ambientDimmerCloseBtn');
+
+      const modalInitiallyHidden = dimmerModal ? dimmerModal.classList.contains('hidden') : false;
+      
+      // Open modal
+      if (eyesClosedBtn) eyesClosedBtn.click();
+      const modalOpened = dimmerModal ? !dimmerModal.classList.contains('hidden') : false;
+
+      // Close modal by clicking anywhere on the overlay
+      if (dimmerModal) dimmerModal.click();
+      const modalClosed = dimmerModal ? dimmerModal.classList.contains('hidden') : false;
+
+      // Pause anchor session to keep environment clean
+      const playBtn = document.getElementById('anchorPlayPauseBtn');
+      if (playBtn && playBtn.textContent.includes('Pause')) playBtn.click();
+
+      return {
+        audioExists,
+        audioMuted,
+        audioUnmuted,
+        volumeSet,
+        modalInitiallyHidden,
+        modalOpened,
+        modalClosed
+      };
+    })()
+  JS
+
+  puts "  AudioEngine exists: #{audio_and_dimmer_result['audioExists']}"
+  puts "  Audio mute/unmute/volume controls: #{audio_and_dimmer_result['audioMuted']} / #{audio_and_dimmer_result['audioUnmuted']} / #{audio_and_dimmer_result['volumeSet']}"
+  puts "  Eyes-Closed Dimmer overlay toggle: Initial #{audio_and_dimmer_result['modalInitiallyHidden']} -> Open: #{audio_and_dimmer_result['modalOpened']} -> Close: #{audio_and_dimmer_result['modalClosed']}"
+
+  raise "AudioEngine missing on window" unless audio_and_dimmer_result['audioExists']
+  raise "AudioEngine volume/mute controls failed" unless audio_and_dimmer_result['audioMuted'] && audio_and_dimmer_result['audioUnmuted'] && audio_and_dimmer_result['volumeSet']
+  raise "Eyes-Closed ambient dimmer failed to open or close" unless audio_and_dimmer_result['modalOpened'] && audio_and_dimmer_result['modalClosed']
+  puts "  [PASS] Alpha Progression visual cards, 3-way tabs, audio engine, and eyes-closed dimmer mode verified."
+
+  # =========================================================================
   # TEST D: Cycle through all 5 navigation tabs twice (Chart.js redrawing & no canvas collision)
   # =========================================================================
   puts "\n[TEST D] Cycling through all 5 navigation tabs twice (Testing Chart.js redraw & memory stability)..."

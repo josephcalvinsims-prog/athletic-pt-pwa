@@ -4,15 +4,15 @@
    ========================================================================== */
 
 :root {
-  --bg-primary: #020617;      /* slate-950 */
-  --bg-card: #0f172a;         /* slate-900 */
-  --bg-elevated: #1e293b;     /* slate-800 */
-  --text-primary: #f1f5f9;    /* slate-100 */
-  --text-muted: #94a3b8;      /* slate-400 */
-  --status-green: #10b981;    /* emerald-500 */
-  --status-yellow: #f59e0b;   /* amber-500 */
-  --status-red: #f43f5e;      /* rose-500 */
-  --accent-cyan: #38bdf8;     /* sky-400 */
+  --bg-primary: #0A0A0C;      /* Obsidian base */
+  --bg-card: #141419;         /* Elevated card surface (Alpha Progression) */
+  --bg-elevated: #1C1C24;     /* Secondary container / chip surface */
+  --text-primary: #F8FAFC;    /* High-contrast crisp white */
+  --text-muted: #94A3B8;      /* Muted secondary slate */
+  --status-green: #10B981;    /* Vibrant emerald */
+  --status-yellow: #F59E0B;   /* Golden amber */
+  --status-red: #F43F5E;      /* Rich rose/coral */
+  --accent-cyan: #38BDF8;     /* Sky blue */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
@@ -58,6 +58,141 @@ body {
   padding-bottom: max(0.45rem, var(--safe-bottom));
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  background-color: rgba(15, 15, 20, 0.92);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Alpha Progression Aesthetic Classes */
+.bg-obsidian {
+  background-color: #0A0A0C !important;
+}
+
+.card-alpha {
+  background-color: #141419;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 20px 45px -15px rgba(0, 0, 0, 0.7);
+}
+
+.card-alpha-elevated {
+  background-color: #1A1A22;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* Battery-Style / Slash Segmented Progress Indicator */
+.segmented-meter {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.segmented-meter-cell {
+  height: 5px;
+  flex: 1;
+  border-radius: 9999px;
+  background-color: rgba(255, 255, 255, 0.08);
+  transition: all 250ms ease;
+}
+
+.segmented-meter-cell.active-emerald {
+  background-color: #10B981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+
+.segmented-meter-cell.active-amber {
+  background-color: #F59E0B;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+}
+
+.segmented-meter-cell.active-rose {
+  background-color: #F43F5E;
+  box-shadow: 0 0 8px rgba(244, 63, 94, 0.4);
+}
+
+/* Dedicated Visual Vector Container (16:9) */
+.exercise-visual-container {
+  aspect-ratio: 16 / 9;
+  background-color: #0D0D12;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 1rem;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Exercise Technique 3-Way Pill Segmented Switcher */
+.exercise-tab-pill {
+  padding: 0.35rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  color: #94A3B8;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.exercise-tab-pill.active {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Ambient "Eyes-Closed Mode" Screen Dimmer (10% Brightness) */
+.ambient-dimmer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background-color: #030305;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+  cursor: pointer;
+  transition: opacity 300ms ease;
+}
+
+.ambient-dimmer-overlay.dimmed {
+  opacity: 0.12; /* 10-12% brightness to rest eyes while following tones */
+}
+
+.ambient-dimmer-overlay:active,
+.ambient-dimmer-overlay.waking {
+  opacity: 0.95;
+}
+
+/* Ambient Pulsing Orb */
+@keyframes ambientOrbPulse {
+  0%, 100% {
+    transform: scale(0.85);
+    opacity: 0.4;
+    box-shadow: 0 0 30px rgba(16, 185, 129, 0.2);
+  }
+  38% {
+    transform: scale(1.18);
+    opacity: 0.95;
+    box-shadow: 0 0 70px rgba(16, 185, 129, 0.5), 0 0 100px rgba(20, 184, 166, 0.3);
+  }
+  43% {
+    transform: scale(1.18);
+    opacity: 0.95;
+  }
+}
+
+.ambient-orb {
+  width: 140px;
+  height: 140px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.35) 0%, rgba(20, 184, 166, 0.15) 60%, transparent 100%);
+  border: 1.5px solid rgba(52, 211, 153, 0.6);
+  animation: ambientOrbPulse 10.5s ease-in-out infinite;
 }
 
 /* Subtle Ambient Mesh Backdrop */
