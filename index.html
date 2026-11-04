@@ -47,33 +47,24 @@
 </head>
 
 <body class="bg-[#0A0A0C] text-slate-100 antialiased selection:bg-emerald-500/30 athletic-shell">
-  <!-- Sticky Top App Header -->
-  <header class="sticky top-0 z-30 bg-slate-950/90 backdrop-blur-xl border-b border-slate-800/80 pt-safe">
-    <div class="max-w-xl mx-auto px-4 py-2.5 flex items-center justify-between gap-2">
+  <!-- Sticky Top App Header (Clean Two-Element Layout) -->
+  <header class="sticky top-0 z-30 bg-[#0A0A0C]/90 backdrop-blur-xl border-b border-white/5 pt-safe">
+    <div class="max-w-xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+      <!-- Left: Screen Title & Date -->
       <div class="flex items-center gap-2.5 min-w-0">
-        <div class="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 shadow-inner">
-          <svg class="w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18M8 6h8M7 10h10M7 14h10M8 18h8" />
-          </svg>
-        </div>
-        <div class="min-w-0">
-          <div class="flex items-center gap-2">
-            <h1 class="text-sm font-extrabold tracking-tight text-slate-100 truncate">APEX AUTOREG PT</h1>
-            <span id="headerDateLabel" class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">TODAY</span>
-          </div>
-          <p class="text-[11px] text-slate-400 truncate">C5-C7 • Occipital • Bilateral Cuff/Labrum OS</p>
-        </div>
+        <h1 id="screenTitleHeader" class="text-xl font-black tracking-tight text-white capitalize truncate">
+          Readiness
+        </h1>
+        <span id="headerDateLabel" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 shrink-0">
+          TODAY
+        </span>
       </div>
 
+      <!-- Right: Single High-Contrast Traffic Light Status Pill -->
       <div class="flex items-center gap-2 shrink-0">
-        <span
-          id="headerAutoSaveBadge"
-          class="text-[11px] font-medium text-emerald-400/90 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900/90 border border-slate-800 transition-opacity duration-300"
-          title="Optimistic auto-save to IndexedDB"
-        >
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-          <span>Saved</span>
-        </span>
+        <!-- Quiet Auto Save telemetry anchor -->
+        <span id="headerAutoSaveBadge" class="hidden">Saved</span>
+
         <button
           id="installPwaBtn"
           type="button"
@@ -81,18 +72,91 @@
         >
           Install
         </button>
+
         <button
           id="headerReadinessPill"
           type="button"
-          class="px-2.5 py-1.5 rounded-full text-[11px] font-bold tracking-wide border bg-emerald-500/15 text-emerald-300 border-emerald-500/40 flex items-center gap-1.5 active:scale-95 transition"
-          title="Jump to Daily Check-In"
+          class="px-3.5 py-1.5 rounded-full text-xs font-black tracking-wider border shadow-lg bg-emerald-500/20 text-emerald-300 border-emerald-500/50 flex items-center gap-2 active:scale-95 transition-all cursor-pointer"
+          title="Open Today's Clinical Readiness & Check-in Parameters"
+          aria-label="Today's Clinical Readiness Status"
         >
-          <span id="headerReadinessDot" class="w-2 h-2 rounded-full bg-emerald-400"></span>
-          <span id="headerReadinessText">GREEN READY</span>
+          <span id="headerReadinessDot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span id="headerReadinessText">● GREEN</span>
         </button>
       </div>
     </div>
   </header>
+
+  <!-- Today's Clinical Readiness Slide-Over Drawer -->
+  <div id="readinessDrawerModal" class="readiness-drawer-overlay select-none" role="dialog" aria-modal="true" aria-label="Today's Clinical Readiness Breakdown">
+    <div class="readiness-drawer-panel bg-[#141419] border-b border-white/10 rounded-b-3xl shadow-2xl p-5 max-w-xl mx-auto space-y-4">
+      <div class="flex items-center justify-between border-b border-white/5 pb-3">
+        <div>
+          <span class="text-[10px] font-black uppercase tracking-widest text-emerald-400">Clinical Parameter Audit</span>
+          <h3 class="text-base font-extrabold text-white mt-0.5">Today's Autoregulation State</h3>
+        </div>
+        <button id="closeReadinessDrawerBtn" type="button" class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center text-sm font-bold active:scale-95 transition cursor-pointer">
+          ✕
+        </button>
+      </div>
+
+      <!-- Quick Status Card -->
+      <div id="drawerReadinessBanner" class="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <span id="drawerReadinessDot" class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>
+          <div>
+            <h4 id="drawerReadinessTitle" class="text-sm font-extrabold text-white">Green Light — High Capacity</h4>
+            <p id="drawerReadinessDesc" class="text-[11px] text-slate-300">Proceed with programmed resistance &amp; hypertrophy volume.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3 Metrics Grid -->
+      <div class="grid grid-cols-3 gap-2 text-center">
+        <div class="p-2.5 rounded-xl bg-white/5 border border-white/5">
+          <span class="text-[10px] font-bold text-slate-400 block uppercase">Scalp Pressure</span>
+          <span id="drawerScalpValue" class="text-lg font-black text-white mt-0.5 block">0/10</span>
+          <span id="drawerScalpZone" class="text-[9px] font-extrabold text-emerald-400 uppercase">Calm</span>
+        </div>
+        <div class="p-2.5 rounded-xl bg-white/5 border border-white/5">
+          <span class="text-[10px] font-bold text-slate-400 block uppercase">Levator Tension</span>
+          <span id="drawerLevatorValue" class="text-lg font-black text-white mt-0.5 block">0/10</span>
+          <span id="drawerLevatorZone" class="text-[9px] font-extrabold text-emerald-400 uppercase">Calm</span>
+        </div>
+        <div class="p-2.5 rounded-xl bg-white/5 border border-white/5">
+          <span class="text-[10px] font-bold text-slate-400 block uppercase">Interscapular</span>
+          <span id="drawerInterscapValue" class="text-lg font-black text-white mt-0.5 block">0/10</span>
+          <span id="drawerInterscapZone" class="text-[9px] font-extrabold text-emerald-400 uppercase">Calm</span>
+        </div>
+      </div>
+
+      <!-- Clinical Guardrail Notes -->
+      <div class="p-3 rounded-xl bg-slate-950 border border-white/5 text-xs text-slate-300 space-y-1.5 leading-relaxed">
+        <div class="flex items-center justify-between text-[11px]">
+          <span class="text-slate-400">Radicular Nerve Active:</span>
+          <span id="drawerRadicularStatus" class="font-bold text-emerald-400">None (Inactive)</span>
+        </div>
+        <div class="flex items-center justify-between text-[11px]">
+          <span class="text-slate-400">C5-C7 Fusion Guard:</span>
+          <span class="font-bold text-slate-200">Strictly Enforced (Zero Overhead)</span>
+        </div>
+        <div class="flex items-center justify-between text-[11px]">
+          <span class="text-slate-400">48-Hr Bodywork Status:</span>
+          <span id="drawerBodyworkStatus" class="font-bold text-slate-300">Normal Window</span>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center gap-2 pt-1">
+        <button id="drawerEditCheckinBtn" type="button" class="flex-1 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs active:scale-95 transition shadow-lg shadow-emerald-500/20 text-center cursor-pointer">
+          Edit Daily Check-In
+        </button>
+        <button id="drawerDismissBtn" type="button" class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 font-bold text-xs active:scale-95 transition cursor-pointer">
+          Dismiss
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- Main Viewport Content Container -->
   <main class="max-w-xl mx-auto px-4 pt-4 pb-safe-nav space-y-5">
@@ -871,41 +935,48 @@
           </button>
         </div>
 
-        <!-- Active Stage Biomechanical Cue Sheet -->
-        <div class="rounded-2xl bg-slate-950/90 border border-slate-800 p-4 space-y-3">
-          <div class="flex flex-wrap items-center justify-between gap-1.5">
-            <h3 id="anchorStageName" class="text-sm font-extrabold text-white">
-              1. Diaphragmatic Rib Expansion
-            </h3>
-            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-              Immediate Cues
+        <!-- Progressive Disclosure: Form Cues & Biomechanics Sleek Drawer -->
+        <details id="anchorClinicalAccordion" class="group rounded-2xl bg-[#0D0D12] border border-white/5 p-4 shadow-xl select-none">
+          <summary class="cursor-pointer text-xs font-bold text-slate-300 flex items-center justify-between select-none">
+            <span class="flex items-center gap-2">
+              <span class="text-sm text-emerald-400">ⓘ</span>
+              <span>Form Cues &amp; Biomechanics</span>
+              <span id="anchorStageNameBadge" class="text-[10px] font-semibold text-slate-400 ml-1"></span>
             </span>
-          </div>
-
-          <!-- Immediate Cues (Primary View) -->
-          <ul id="anchorStageCuesList" class="space-y-1.5 text-xs text-slate-200"></ul>
-
-          <!-- Immediate Guardrail (Primary View) -->
-          <div class="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-[11px] text-rose-200">
-            <strong class="font-bold text-rose-300">Guardrail:</strong>
-            <span id="anchorStageFaultWarning"></span>
-          </div>
-
-          <!-- Progressive Disclosure: Clinical Rationale Collapsible Accordion -->
-          <details class="group rounded-xl bg-slate-900/70 border border-slate-800/80 p-3">
-            <summary class="cursor-pointer text-xs font-semibold text-slate-300 flex items-center justify-between select-none">
-              <span class="flex items-center gap-1.5">
-                <span class="text-xs text-emerald-400">ℹ</span>
-                <span>Clinical Rationale &amp; Biomechanical Target</span>
+            <span class="text-slate-500 text-xs group-open:rotate-180 transition-transform">▼</span>
+          </summary>
+          <div class="mt-3.5 space-y-3 pt-3 border-t border-white/5">
+            <div class="flex items-center justify-between gap-2">
+              <h3 id="anchorStageName" class="text-sm font-extrabold text-white">
+                1. Diaphragmatic Rib Expansion
+              </h3>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                Stage Form
               </span>
-              <span class="text-[10px] text-slate-400 group-open:rotate-180 transition-transform">▼</span>
-            </summary>
-            <div class="mt-2.5 space-y-2 text-xs text-slate-400 leading-relaxed">
-              <div id="anchorStageTarget" class="text-emerald-400 font-semibold"></div>
-              <p id="anchorStageSummary" class="text-slate-300"></p>
             </div>
-          </details>
-        </div>
+
+            <!-- Stage Cues -->
+            <ul id="anchorStageCuesList" class="space-y-1.5 text-xs text-slate-200"></ul>
+
+            <!-- Guardrail Warning -->
+            <div class="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-[11px] text-rose-200">
+              <strong class="font-bold text-rose-300">Guardrail:</strong>
+              <span id="anchorStageFaultWarning"></span>
+            </div>
+
+            <!-- Clinical Rationale Details -->
+            <details class="group rounded-xl bg-slate-900/60 border border-slate-800 p-2.5">
+              <summary class="cursor-pointer text-[11px] font-semibold text-slate-400 flex items-center justify-between">
+                <span>Clinical Rationale &amp; Biomechanical Target</span>
+                <span class="text-[9px] text-slate-500 group-open:rotate-180 transition-transform">▼</span>
+              </summary>
+              <div class="mt-2 space-y-1 text-xs text-slate-400 leading-relaxed">
+                <div id="anchorStageTarget" class="text-emerald-400 font-semibold"></div>
+                <p id="anchorStageSummary" class="text-slate-300"></p>
+              </div>
+            </details>
+          </div>
+        </details>
 
         <button
           id="markAnchorCompleteManualBtn"

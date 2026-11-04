@@ -325,12 +325,16 @@ export const CROSS_GATES_LIBRARY = Object.freeze([
     isPrep: true,
     targetMuscles: 'Infraspinatus & Teres Minor (Rotator Cuff)',
     relaxedMuscles: 'Neck, Levator & Upper Traps',
-    whyProtects: 'Centers your arm bone cleanly in the socket so your front labrum doesn’t pinch and your neck stops clenching.',
+    whyProtects: 'Centers arm bone cleanly in the glenoid socket, preventing labral pinch and shutting down compensatory neck clenching.',
     setupEquipment: 'Dual cable column set to elbow height + gym towel rolled under elbow to create 20° arm spacing.',
+    tempoLabel: '8s Sustained Isometric Hold',
+    tempo: { liftSec: 1, holdSec: 8, lowerSec: 1 },
+    targetZones: ['rotator_cuff', 'infraspinatus'],
+    offloadZones: ['cervical_spine', 'upper_traps', 'levator'],
     techniqueCues: [
-      'Pin the rolled towel snug between elbow and ribs with elbow bent at 90 degrees.',
-      'Rotate forearm outward against the cable until forearm points forward—feel the deep back shoulder cuff burn.',
-      'Hold 8 seconds with neck and jaw totally loose. Never shrug or let your shoulder hike.'
+      '**Pin towel roll:** Keep elbow bent at 90° snug against ribs with rolled towel pinned.',
+      '**Rotate outward:** Pull forearm out until straight forward—feel posterior cuff bite.',
+      '**Hold 8 seconds:** Keep neck and jaw totally loose without shrugging.'
     ],
     clinicalCue:
       'Tuck a rolled towel between elbow and ribs (~20° abduction) to preserve supraspinatus vascularity and centrate the humeral head without labral shear.',
@@ -350,12 +354,16 @@ export const CROSS_GATES_LIBRARY = Object.freeze([
     isPrep: true,
     targetMuscles: 'Serratus Anterior (Rib Wrappers)',
     relaxedMuscles: 'Upper Trapezius & Levator Scapulae',
-    whyProtects: 'Trains your shoulder blade to rotate upward safely on the ribs, instantly silencing rhomboid and neck muscle guarding.',
+    whyProtects: 'Trains shoulder blades to glide and rotate upward smoothly over ribs, reciprocal-inhibiting rhomboid and neck muscle tone.',
     setupEquipment: 'Smooth turf wall or power rack pillar + light mini-band or foam roller across forearms.',
+    tempoLabel: '3s Glide Up • 2s Hold • 3s Control',
+    tempo: { liftSec: 3, holdSec: 2, lowerSec: 3 },
+    targetZones: ['serratus', 'scapular_rotators'],
+    offloadZones: ['cervical_spine', 'upper_traps', 'levator'],
     techniqueCues: [
-      'Place forearms parallel on wall with elbows at shoulder width.',
-      'Gently push forearms forward into wall so your shoulder blades wrap wide around your ribcage.',
-      'Slide upward 6-8 inches in a gentle ‘V’ shape; pause 2s at top without letting shoulders crawl toward ears.'
+      '**Forearms on wall:** Set elbows at shoulder width with light outward band tension.',
+      '**Push & protract:** Wrap shoulder blades wide around ribcage.',
+      '**Slide up 6-8":** Maintain zero upper trap shrugging and pause 2s at top.'
     ],
     clinicalCue:
       'Maintain gentle forearm protraction into roller while gliding upward in scaption; reciprocally inhibits rhomboid and levator downward-rotation guarding.',
@@ -375,12 +383,16 @@ export const CROSS_GATES_LIBRARY = Object.freeze([
     isPrep: true,
     targetMuscles: 'Lower Trapezius & Mid-Back',
     relaxedMuscles: 'Neck, Cranial Fascia & Upper Traps',
-    whyProtects: 'Wakes up your mid-back lower traps to pull your shoulder blades down away from your neck fusion.',
+    whyProtects: 'Awakens lower trapezius depressors to anchor shoulder blades down and back, decompressing cervical nerve roots.',
     setupEquipment: 'Incline bench set to 45–60 degrees. Use bodyweight or light 2.5–5 lb weight plates.',
+    tempoLabel: '2s Lift • 2s Peak Hold • 3s Lower',
+    tempo: { liftSec: 2, holdSec: 2, lowerSec: 3 },
+    targetZones: ['lower_traps', 'mid_back'],
+    offloadZones: ['cervical_spine', 'upper_traps', 'levator'],
     techniqueCues: [
-      'Lie chest-down on the incline bench with forehead resting neutral and eyes cast straight down.',
-      'Raise arms in a wide ‘Y’ shape with thumbs pointing toward the ceiling.',
-      'Squeeze the bottom tips of your shoulder blades together; keep neck muscles completely soft.'
+      '**Chest on bench:** Rest forehead neutral with eyes gazing straight down at floor.',
+      '**Raise in wide "Y":** Point thumbs toward ceiling along 130° scaption line.',
+      '**Squeeze lower traps:** Draw bottom tips of shoulder blades down toward back pockets.'
     ],
     clinicalCue:
       'Chest supported on high incline bench, forehead neutral, thumbs angled up at 130° scaption—initiates with scapular depression/posterior tilt via lower trap.',
@@ -402,12 +414,16 @@ export const CROSS_GATES_LIBRARY = Object.freeze([
     isPrep: false,
     targetMuscles: 'Lats & Mid-Back (Rhomboids)',
     relaxedMuscles: 'Cervical Fusion (C5-C7) & Upper Traps',
-    whyProtects: 'The chest pad completely eliminates spine compression, protecting your cervical fusion while building upper back armor.',
+    whyProtects: 'The sternum pad fully absorbs axial forces, protecting the C5–C7 fusion while building armor across the mid-back.',
     setupEquipment: 'Cross Gates chest-supported row: set seat height so chest pad sits flush against middle of sternum.',
+    tempoLabel: '2s Row • 1s Squeeze • 3s Lower',
+    tempo: { liftSec: 2, holdSec: 1, lowerSec: 3 },
+    targetZones: ['lats', 'mid_back'],
+    offloadZones: ['cervical_spine', 'upper_traps'],
     techniqueCues: [
-      'Lock your chest flat against the pad; keep neck long and eyes gazing gently forward.',
-      'Pull elbows back toward your back pockets—don’t yank upward with your neck or traps.',
-      'Squeeze shoulder blades together at the torso line without poking your chin forward.'
+      '**Lock chest to pad:** Keep neck long and gaze neutral—never yank with chin.',
+      '**Drive elbows back:** Pull toward back pockets, stopping flush with torso.',
+      '**Retract shoulder blades:** Squeeze mid-back without elevating upper traps.'
     ],
     clinicalCue:
       'Sternum stays glued to pad (eliminating axial/cervical stabilization demand). Stop elbows right at the torso plane—never pull past ribs to protect anterior labrum.',
@@ -427,12 +443,16 @@ export const CROSS_GATES_LIBRARY = Object.freeze([
     isPrep: false,
     targetMuscles: 'Lower Lats & Scapular Depressors',
     relaxedMuscles: 'Levator Scapulae & Upper Neck',
-    whyProtects: 'Pulling from high to low channels the force down into your broad back muscles instead of pulling on sensitive neck nerves.',
+    whyProtects: 'Down-and-back diagonal vector aligns force through the latissimus dorsi, bypassing levator scapulae tension.',
     setupEquipment: 'Dual cable column with pulleys set to top setting (~6-7 ft high) + independent D-handles.',
+    tempoLabel: '2s Pull • 2s Hold • 3s Control',
+    tempo: { liftSec: 2, holdSec: 2, lowerSec: 3 },
+    targetZones: ['lower_lats', 'lower_traps'],
+    offloadZones: ['cervical_spine', 'levator'],
     techniqueCues: [
-      'Take a solid half-kneeling or tall seated stance facing the high cables.',
-      'Drive your elbows down and back toward your hip pockets, feeling your lower lats bite.',
-      'Exhale completely as you pull to drop your ribs and keep your neck long and peaceful.'
+      '**Set high pulleys:** Half-kneel or sit tall with neutral spine and braced core.',
+      '**Drive elbows down:** Pull down and in toward hip pockets to engage lower lats.',
+      '**Exhale on pull:** Empty lungs completely to drop ribcage and silence neck strain.'
     ],
     clinicalCue:
       'Set pulleys ~35-45° above shoulder line, half-kneeling or tall-seated. Drive elbows down toward front pockets—aligns pull line with lower trapezius & lats instead of levator scapulae.',
@@ -454,12 +474,16 @@ export const CROSS_GATES_LIBRARY = Object.freeze([
     isPrep: false,
     targetMuscles: 'Serratus Anterior & Front Shoulders',
     relaxedMuscles: 'Shoulder Labrum & Neck Extensors',
-    whyProtects: 'The angled 60-degree press lets your arm move naturally without harsh overhead impingement or arching your neck.',
+    whyProtects: 'The 60° diagonal plane permits upward scapular rotation without true 180° overhead impingement or neck arching.',
     setupEquipment: 'Cross Gates turf landmine station + Olympic bar. Rest back knee on a soft foam pad.',
+    tempoLabel: '2s Press • 1s Reach • 3s Lower',
+    tempo: { liftSec: 2, holdSec: 1, lowerSec: 3 },
+    targetZones: ['serratus', 'anterior_delts'],
+    offloadZones: ['cervical_spine', 'labrum'],
     techniqueCues: [
-      'Kneel with one knee forward, holding the end of the barbell at collarbone level.',
-      'Press up and forward along the bar’s natural 60-degree diagonal path.',
-      'Push smoothly through the top of the press to reach your shoulder blade forward around your ribs.'
+      '**Half-kneel tall:** Hold barbell collar at collarbone level with back knee down.',
+      '**Press 60° diagonal:** Follow bar natural arc without leaning back or hyperextending.',
+      '**Reach at lockout:** Push shoulder blade smoothly forward to recruit serratus.'
     ],
     clinicalCue:
       'Angled ~55-65° upward arc allows upward scapular rotation and serratus protraction finish at lockout without true 180° subacromial impingement or C4-C7 extension.',
@@ -479,12 +503,16 @@ export const CROSS_GATES_LIBRARY = Object.freeze([
     isPrep: false,
     targetMuscles: 'Chest (Pectorals) & Front Delts',
     relaxedMuscles: 'Anterior Labrum & Rotator Cuff',
-    whyProtects: 'Independent cables let your arms follow a natural converging arc, eliminating front shoulder pinch.',
+    whyProtects: 'Independent cables permit converging scaption, stopping humeral head anterior glide and protecting partial tears.',
     setupEquipment: '30-degree incline bench centered between low cable pulleys + independent D-handles.',
+    tempoLabel: '2s Press • 1s Peak • 3s Lower',
+    tempo: { liftSec: 2, holdSec: 1, lowerSec: 3 },
+    targetZones: ['pectorals', 'anterior_delts'],
+    offloadZones: ['cervical_spine', 'labrum'],
     techniqueCues: [
-      'Lie back with head resting softly on bench pad; hold handles at mid-chest height.',
-      'Press handles up and inward in a gentle arc until hands meet over upper chest.',
-      'Lower slowly and stop when elbows reach bench level—never let elbows drop behind your torso.'
+      '**Settle on incline:** Keep head resting comfortably flat on 30° bench.',
+      '**Press converging arc:** Bring handles together above chest in scaption plane.',
+      '**Control eccentric:** Stop elbows flush with bench—never drop behind torso plane.'
     ],
     clinicalCue:
       'Independent cables let shoulders move in natural ~35-45° scaption. Hard ROM stop: keep elbows 1-2 inches in front of bench pad at bottom to eliminate anterior labral shear.',
@@ -506,12 +534,16 @@ export const CROSS_GATES_LIBRARY = Object.freeze([
     isPrep: false,
     targetMuscles: 'Quads, Glutes & Calves',
     relaxedMuscles: 'Spine & Neck (Zero Compressive Load)',
-    whyProtects: 'Total lower-body burn with zero barbell weight pressing down on your C5–C7 neck fusion.',
+    whyProtects: 'Maximal concentric leg output with absolute zero compressive load resting on the cervical fusion.',
     setupEquipment: 'Cross Gates indoor turf sled track + heavy-duty tow strap with hand loops.',
+    tempoLabel: 'Continuous Dynamic Leg Drive',
+    tempo: { liftSec: 2, holdSec: 0, lowerSec: 2 },
+    targetZones: ['quads', 'glutes', 'calves'],
+    offloadZones: ['cervical_spine', 'upper_traps'],
     techniqueCues: [
-      'Push: Grip upright poles at mid-chest height, keep spine neutral, and drive forcefully through toes.',
-      'Drag: Face the sled holding strap with straight relaxed arms; take big, deliberate backward steps.',
-      'Keep your neck and shoulders totally relaxed—let your legs and hips do 100% of the work.'
+      '**Push forward:** Drive through balls of feet with neutral spine and long neck.',
+      '**Drag backward:** Hold tow strap with straight, relaxed arms taking deliberate strides.',
+      '**Isolate lower body:** Keep traps and neck passive—let quads and hips power movement.'
     ],
     clinicalCue:
       'Concentric-dominant quad & glute drive with zero compressive load across C5-C7 fusion and zero eccentric labral shear. Keep neck aligned with torso on pushes and arms relaxed on backward strap drags.',
@@ -531,12 +563,16 @@ export const CROSS_GATES_LIBRARY = Object.freeze([
     isPrep: false,
     targetMuscles: 'Quadriceps, Glutes & Core',
     relaxedMuscles: 'Cervical Spine & Upper Traps',
-    whyProtects: 'Holding the dumbbell in front keeps your torso upright and fires your core without crushing your neck vertebrae.',
+    whyProtects: 'Anterior vertical load creates natural core bracing without any bar resting across C7 or upper trapezius nerves.',
     setupEquipment: 'Single dumbbell (35–55 lbs) held vertically under palms + optional rubber slant board / heel wedge.',
+    tempoLabel: '3s Lower • 1s Pause • 2s Stand',
+    tempo: { liftSec: 2, holdSec: 1, lowerSec: 3 },
+    targetZones: ['quads', 'glutes', 'core'],
+    offloadZones: ['cervical_spine', 'upper_traps'],
     techniqueCues: [
-      'Cup the top head of the dumbbell with both hands tight against your upper chest.',
-      'Squat down between your knees, keeping your elbows pointed down and chest proud.',
-      'Push the floor away through your mid-foot to stand up tall without shrugging.'
+      '**Cup the dumbbell:** Hold top bell tight under chin with elbows tucked down.',
+      '**Squat between hips:** Descend smoothly keeping torso tall and knees tracking toes.',
+      '**Drive mid-foot:** Stand tall without hunching or straining cervical spine.'
     ],
     clinicalCue:
       'Anterior goblet hold recruits serratus anterior & anterior core reflexively while completely avoiding C7/upper-trapezius barbell compression.',
@@ -556,12 +592,16 @@ export const CROSS_GATES_LIBRARY = Object.freeze([
     isPrep: false,
     targetMuscles: 'Heart & Leg Stamina',
     relaxedMuscles: 'Neck, Upper Traps & Back',
-    whyProtects: 'The padded backrest fully supports your spine, eliminating neck fatigue during high cardiovascular output.',
+    whyProtects: 'The bucket seat and backrest completely eliminate cervical-thoracic postural load during high cardiovascular output.',
     setupEquipment: 'Cross Gates recumbent bike: adjust seat so knee has a slight 15° bend at full pedal reach.',
+    tempoLabel: '30s Sprint / 60s Recovery Cadence',
+    tempo: { liftSec: 2, holdSec: 0, lowerSec: 2 },
+    targetZones: ['legs', 'cardio'],
+    offloadZones: ['cervical_spine', 'upper_traps', 'back'],
     techniqueCues: [
-      'Sit back flush against the supportive backrest and adjust foot straps snug.',
-      'Rest your hands loosely on the side handgrips—never white-knuckle squeeze during sprints.',
-      'Sprint hard for 30 seconds with powerful leg strokes, then spin easy for 60 seconds with nasal breathing.'
+      '**Align backrest:** Support lumbar and thoracic spine completely against padded seat.',
+      '**Sprint intervals:** Drive high-cadence pedals for 30s while maintaining relaxed grip.',
+      '**Breathe diaphragmatically:** Inhale deeply through nose during 60s recovery cycles.'
     ],
     clinicalCue:
       'Backrest unloads cervical-thoracic musculature during high cardiovascular output. Rest hands open on side grips—never white-knuckle pull during sprints.',
@@ -579,18 +619,22 @@ export const CROSS_GATES_LIBRARY = Object.freeze([
     defaultRpe: 6,
     yellowPriority: true,
     isPrep: false,
-    targetMuscles: 'Glutes, Calves & Aerobic Base',
-    relaxedMuscles: 'Neck & Scapular Muscle Spasms',
-    whyProtects: 'Natural reciprocal arm swing uncoils tight thoracic ribs and gently stretches stiff neck fascia.',
-    setupEquipment: 'Incline treadmill set to 6–10% grade at 2.8–3.2 mph walking speed.',
+    targetMuscles: 'Posterior Chain & Aerobic Engine',
+    relaxedMuscles: 'Spine & Upper Traps (Zero Ground Shock)',
+    whyProtects: 'Incline angle eliminates ground-reaction shock waves up the spine while keeping arm swing completely uninhibited.',
+    setupEquipment: 'Cross Gates commercial treadmill set to 6–10% incline at 2.8–3.4 mph.',
+    tempoLabel: 'Steady Aerobic Stride',
+    tempo: { liftSec: 1, holdSec: 0, lowerSec: 1 },
+    targetZones: ['calves', 'glutes', 'posterior_chain'],
+    offloadZones: ['cervical_spine', 'upper_traps'],
     techniqueCues: [
-      'Keep your hands off the handrails completely—let your arms swing freely with each stride.',
-      'Walk tall with eyes looking straight ahead at eye level, never down at your phone.',
-      'Drive through your heel and push off your big toe to fire your glutes on the incline.'
+      '**Set incline 6-10%:** Walk at 2.8-3.4 mph with upright posture and natural arm swing.',
+      '**Never grip handrails:** Let arms swing naturally to promote thoracic rotation.',
+      '**Breathe nasally:** Keep respiratory rate calm to prevent accessory scalene overuse.'
     ],
     clinicalCue:
-      'Hands completely off handrails! Natural contralateral arm swing gently mobilizes thoracic segments and pumps cervical fascia while building daily step volume.',
-    yellowNote: 'Set 4-6% moderate incline at 3.0-3.4 mph; keep gaze level on horizon (not down at phone).'
+      'Incline eliminates ground-impact shock waves transmitted to C5-C7 fusion. Never hold rails; allow natural cross-body arm swing for thoracic mobilization.',
+    yellowNote: 'Reduce incline to 4-5% if scalenes or occipital pressure elevate.'
   }
 ]);
 

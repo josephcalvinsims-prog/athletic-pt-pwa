@@ -206,10 +206,31 @@ function bindNavigationEvents() {
     });
   });
 
+  // Top Header Readiness Pill -> Slide-over Drawer
   const headerPill = document.getElementById('headerReadinessPill');
+  const drawerModal = document.getElementById('readinessDrawerModal');
+  const closeDrawerBtn = document.getElementById('closeReadinessDrawerBtn');
+  const dismissDrawerBtn = document.getElementById('drawerDismissBtn');
+  const editCheckinBtn = document.getElementById('drawerEditCheckinBtn');
+
   headerPill?.addEventListener('click', () => {
+    drawerModal?.classList.add('open');
+  });
+
+  const closeDrawer = () => drawerModal?.classList.remove('open');
+  closeDrawerBtn?.addEventListener('click', closeDrawer);
+  dismissDrawerBtn?.addEventListener('click', closeDrawer);
+
+  drawerModal?.addEventListener('click', (e) => {
+    if (e.target === drawerModal) closeDrawer();
+  });
+
+  editCheckinBtn?.addEventListener('click', () => {
+    closeDrawer();
     switchTab('dashboard');
-    document.getElementById('checkinCardShell')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => {
+      document.getElementById('checkinCardShell')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
   });
 
   document.getElementById('openBaselineSettingsBtn')?.addEventListener('click', () => {
@@ -222,6 +243,18 @@ function bindNavigationEvents() {
 
 export function switchTab(tabName) {
   state.activeTab = tabName;
+
+  const tabTitles = {
+    dashboard: 'Readiness',
+    anchor: 'Anchor',
+    workout: 'Workouts',
+    analytics: 'Analytics',
+    consultant: 'Consultant'
+  };
+  const titleHeader = document.getElementById('screenTitleHeader');
+  if (titleHeader) {
+    titleHeader.textContent = tabTitles[tabName] || 'Readiness';
+  }
 
   document.querySelectorAll('.tab-panel').forEach((panel) => {
     panel.classList.toggle('active', panel.id === `tab-${tabName}`);
@@ -273,20 +306,91 @@ function updateHeaderReadinessPill(evalResult) {
   if (!pill || !dot || !text) return;
 
   pill.className =
-    'px-2.5 py-1.5 rounded-full text-[11px] font-bold tracking-wide border flex items-center gap-1.5 active:scale-95 transition ';
+    'px-3.5 py-1.5 rounded-full text-xs font-black tracking-wider border shadow-md flex items-center gap-2 active:scale-95 transition-all cursor-pointer ';
 
   if (evalResult.status === 'red') {
-    pill.className += 'bg-rose-500/15 text-rose-300 border-rose-500/40';
+    pill.className += 'bg-rose-500/20 text-rose-300 border-rose-500/60 shadow-rose-950/40';
     dot.className = 'w-2 h-2 rounded-full bg-rose-400 animate-pulse';
-    text.textContent = 'RED • DECOMPRESS';
+    text.textContent = '● RED';
   } else if (evalResult.status === 'yellow') {
-    pill.className += 'bg-amber-500/15 text-amber-300 border-amber-500/40';
+    pill.className += 'bg-amber-500/20 text-amber-300 border-amber-500/60 shadow-amber-950/40';
     dot.className = 'w-2 h-2 rounded-full bg-amber-400';
-    text.textContent = 'YELLOW • -25%';
+    text.textContent = '● AMBER';
   } else {
-    pill.className += 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40';
+    pill.className += 'bg-emerald-500/20 text-emerald-300 border-emerald-500/60 shadow-emerald-950/40';
     dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
-    text.textContent = 'GREEN • READY';
+    text.textContent = '● GREEN';
+  }
+
+  updateReadinessDrawerContent(evalResult);
+}
+
+function updateReadinessDrawerContent(evalResult) {
+  const c = state.todayCheckin || {};
+  const banner = document.getElementById('drawerReadinessBanner');
+  const dot = document.getElementById('drawerReadinessDot');
+  const title = document.getElementById('drawerReadinessTitle');
+  const desc = document.getElementById('drawerReadinessDesc');
+
+  const scalpVal = document.getElementById('drawerScalpValue');
+  const scalpZone = document.getElementById('drawerScalpZone');
+  const levVal = document.getElementById('drawerLevatorValue');
+  const levZone = document.getElementById('drawerLevatorZone');
+  const interVal = document.getElementById('drawerInterscapValue');
+  const interZone = document.getElementById('drawerInterscapZone');
+  const radStatus = document.getElementById('drawerRadicularStatus');
+  const bwStatus = document.getElementById('drawerBodyworkStatus');
+
+  const sVal = c.scalpPressure ?? symptomValues.scalp ?? 0;
+  const lVal = c.interscapularSoreness ?? symptomValues.levator ?? 0;
+  const iVal = symptomValues.interscap ?? 0;
+
+  if (scalpVal) scalpVal.textContent = `${sVal}/10`;
+  if (scalpZone) {
+    scalpZone.textContent = sVal >= 7 ? 'Flare' : sVal >= 4 ? 'Caution' : 'Calm';
+    scalpZone.className = `text-[9px] font-extrabold uppercase ${sVal >= 7 ? 'text-rose-400' : sVal >= 4 ? 'text-amber-400' : 'text-emerald-400'}`;
+  }
+
+  if (levVal) levVal.textContent = `${lVal}/10`;
+  if (levZone) {
+    levZone.textContent = lVal >= 7 ? 'Flare' : lVal >= 4 ? 'Caution' : 'Calm';
+    levZone.className = `text-[9px] font-extrabold uppercase ${lVal >= 7 ? 'text-rose-400' : lVal >= 4 ? 'text-amber-400' : 'text-emerald-400'}`;
+  }
+
+  if (interVal) interVal.textContent = `${iVal}/10`;
+  if (interZone) {
+    interZone.textContent = iVal >= 7 ? 'Flare' : iVal >= 4 ? 'Caution' : 'Calm';
+    interZone.className = `text-[9px] font-extrabold uppercase ${iVal >= 7 ? 'text-rose-400' : iVal >= 4 ? 'text-amber-400' : 'text-emerald-400'}`;
+  }
+
+  if (radStatus) {
+    const isRad = Boolean(c.radicularActive);
+    radStatus.textContent = isRad ? 'ACTIVE FLARE (Zero Load)' : 'None (Inactive)';
+    radStatus.className = `font-bold ${isRad ? 'text-rose-400' : 'text-emerald-400'}`;
+  }
+
+  if (bwStatus) {
+    const bwEval = evaluateBodyworkWindow(state.latestBodywork);
+    bwStatus.textContent = bwEval.inWindow ? `Decompression Active (${bwEval.hoursRemaining}h)` : 'Clear / Normal Window';
+  }
+
+  if (banner && title && desc && dot) {
+    if (evalResult.status === 'red') {
+      banner.className = 'p-3.5 rounded-2xl bg-rose-500/15 border border-rose-500/40 flex items-center justify-between';
+      dot.className = 'w-3 h-3 rounded-full bg-rose-400 animate-pulse';
+      title.textContent = 'Red Light — Neuro-Decompression Only';
+      desc.textContent = 'High symptom guarding triggered. Axial resistance locked; Tier 1 Anchor recommended.';
+    } else if (evalResult.status === 'yellow') {
+      banner.className = 'p-3.5 rounded-2xl bg-amber-500/15 border border-amber-500/40 flex items-center justify-between';
+      dot.className = 'w-3 h-3 rounded-full bg-amber-400';
+      title.textContent = 'Yellow Light — Autoregulated Volume';
+      desc.textContent = 'Working loads auto-scaled down 25%. RPE capped at ≤ 7. Submaximal tempos enforced.';
+    } else {
+      banner.className = 'p-3.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-between';
+      dot.className = 'w-3 h-3 rounded-full bg-emerald-400';
+      title.textContent = 'Green Light — High Capacity Ready';
+      desc.textContent = 'Optimal readiness. Cleared for programmed resistance following mandatory rotator cuff prep.';
+    }
   }
 }
 
@@ -1101,6 +1205,12 @@ function startAnchorTimer() {
   state.anchor.isRunning = true;
   state.anchor.endTimestampMs = Date.now() + state.anchor.remainingSec * 1000;
 
+  // Automatically collapse clinical cues & biomechanics drawer so 80%+ of screen focuses on breathing ring
+  const clinicalAccordion = document.getElementById('anchorClinicalAccordion');
+  if (clinicalAccordion) {
+    clinicalAccordion.open = false;
+  }
+
   // Prime Web Audio context directly within user gesture pipeline
   initOrResumeAudio()
     .then(() => {
@@ -1526,169 +1636,255 @@ function renderWorkoutReadinessBanner() {
   }
 }
 
-function renderExerciseVisualSvg(ex) {
-  const targetColor = '#10B981'; // emerald
-  const targetGlow = 'rgba(16, 185, 129, 0.4)';
-  const neckColor = '#64748B';   // slate-500
-  const bodyColor = '#94A3B8';   // slate-400
-  const benchColor = '#334155';  // slate-700
-  const id = ex.id;
+const activeRepPacers = {};
 
-  let visualContent = '';
+function toggleExerciseRepPacer(exerciseId) {
+  const ex = getExerciseById(exerciseId);
+  if (!ex) return;
+
+  const btn = document.querySelector(`.tempo-pacer-btn[data-exercise-id="${exerciseId}"]`);
+  const icon = btn?.querySelector('.pacer-icon');
+  const label = btn?.querySelector('.pacer-label');
+  const repBadge = document.getElementById(`repBadge-${exerciseId}`);
+  const phaseName = document.getElementById(`tempoPhaseName-${exerciseId}`);
+  const fillLift = document.getElementById(`cadenceFillLift-${exerciseId}`);
+  const fillHold = document.getElementById(`cadenceFillHold-${exerciseId}`);
+  const fillLower = document.getElementById(`cadenceFillLower-${exerciseId}`);
+
+  // If already running for this exercise, pause / stop it
+  if (activeRepPacers[exerciseId]) {
+    clearTimeout(activeRepPacers[exerciseId].timeoutId);
+    delete activeRepPacers[exerciseId];
+
+    if (btn) {
+      btn.className =
+        'tempo-pacer-btn w-full py-2 px-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[10px] font-black uppercase tracking-wider active:scale-95 transition flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/25 cursor-pointer';
+      if (icon) icon.textContent = '▶';
+      if (label) label.textContent = 'Start Set';
+    }
+    if (phaseName) phaseName.textContent = 'Phase: Ready';
+    if (fillLift) fillLift.style.width = '0%';
+    if (fillHold) fillHold.style.width = '0%';
+    if (fillLower) fillLower.style.width = '0%';
+    return;
+  }
+
+  // Stop any other currently active exercise pacers across the screen
+  Object.keys(activeRepPacers).forEach((otherId) => {
+    toggleExerciseRepPacer(otherId);
+  });
+
+  const liftMs = (ex.tempo?.liftSec || 2) * 1000;
+  const holdMs = (ex.tempo?.holdSec || 2) * 1000;
+  const lowerMs = (ex.tempo?.lowerSec || 3) * 1000;
+  let repCount = 1;
+
+  if (btn) {
+    btn.className =
+      'tempo-pacer-btn w-full py-2 px-2.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-white text-[10px] font-black uppercase tracking-wider active:scale-95 transition flex items-center justify-center gap-1.5 shadow-md shadow-rose-500/25 cursor-pointer animate-pulse';
+    if (icon) icon.textContent = '⏸';
+    if (label) label.textContent = 'Pause Set';
+  }
+  if (repBadge) repBadge.textContent = `Rep ${repCount}`;
+
+  activeRepPacers[exerciseId] = { isRunning: true };
+
+  function executeCycle() {
+    if (!activeRepPacers[exerciseId]) return;
+
+    // Reset fills
+    if (fillLift) { fillLift.style.transition = 'none'; fillLift.style.width = '0%'; }
+    if (fillHold) { fillHold.style.transition = 'none'; fillHold.style.width = '0%'; }
+    if (fillLower) { fillLower.style.transition = 'none'; fillLower.style.width = '0%'; }
+
+    // Phase 1: LIFT (Concentric)
+    if (phaseName) phaseName.textContent = 'Phase: 1. LIFT';
+    audioEngine.playFeedbackBlip(528, 0.04);
+
+    requestAnimationFrame(() => {
+      if (fillLift) {
+        fillLift.style.transition = `width ${liftMs}ms linear`;
+        fillLift.style.width = '100%';
+      }
+    });
+
+    const holdT = setTimeout(() => {
+      if (!activeRepPacers[exerciseId]) return;
+
+      // Phase 2: HOLD (Isometric)
+      if (phaseName) phaseName.textContent = 'Phase: 2. HOLD';
+      audioEngine.playFeedbackBlip(660, 0.04);
+
+      if (fillHold) {
+        fillHold.style.transition = `width ${holdMs}ms linear`;
+        fillHold.style.width = '100%';
+      }
+
+      const lowerT = setTimeout(() => {
+        if (!activeRepPacers[exerciseId]) return;
+
+        // Phase 3: LOWER (Eccentric)
+        if (phaseName) phaseName.textContent = 'Phase: 3. LOWER';
+        audioEngine.playFeedbackBlip(440, 0.04);
+
+        if (fillLower) {
+          fillLower.style.transition = `width ${lowerMs}ms linear`;
+          fillLower.style.width = '100%';
+        }
+
+        const nextRepT = setTimeout(() => {
+          if (!activeRepPacers[exerciseId]) return;
+
+          repCount += 1;
+          if (repBadge) repBadge.textContent = `Rep ${repCount}`;
+          executeCycle();
+        }, lowerMs);
+
+        if (activeRepPacers[exerciseId]) activeRepPacers[exerciseId].timeoutId = nextRepT;
+      }, holdMs);
+
+      if (activeRepPacers[exerciseId]) activeRepPacers[exerciseId].timeoutId = lowerT;
+    }, liftMs);
+
+    if (activeRepPacers[exerciseId]) activeRepPacers[exerciseId].timeoutId = holdT;
+  }
+
+  executeCycle();
+}
+
+/**
+ * Vector Anatomical Muscle Map SVG Generator
+ * Renders stylized human silhouette in matte slate (#1E293B / #334155) on #0A0A0E.
+ * Dynamically illuminates target muscle groups (emerald/coral glow) and marks guarded
+ * neck & upper trapezius zones with red outlines and ✕ indicators.
+ */
+function renderAnatomicalMuscleMapSvg(ex) {
+  const id = ex.id;
+  const isCoral = id === 'half-kneeling-landmine-press' || id === 'dual-cable-incline-press';
+  const glowColor = isCoral ? '#F43F5E' : '#10B981';
+
+  let muscleHighlights = '';
 
   if (id === 'cable-er-iso') {
-    visualContent = `
-      <line x1="40" y1="110" x2="160" y2="110" stroke="#38BDF8" stroke-width="2.5" stroke-dasharray="4 2"/>
-      <circle cx="40" cy="110" r="5" fill="#38BDF8"/>
-      <ellipse cx="230" cy="120" rx="20" ry="42" fill="#1E293B" stroke="${bodyColor}" stroke-width="2.5"/>
-      <line x1="230" y1="78" x2="230" y2="60" stroke="${neckColor}" stroke-width="6" stroke-linecap="round"/>
-      <circle cx="230" cy="46" r="14" fill="#1E293B" stroke="${bodyColor}" stroke-width="2.5"/>
-      <rect x="214" y="112" width="10" height="18" rx="4" fill="#F59E0B" opacity="0.9"/>
-      <line x1="225" y1="90" x2="225" y2="125" stroke="${bodyColor}" stroke-width="6" stroke-linecap="round"/>
-      <line x1="225" y1="125" x2="160" y2="110" stroke="${bodyColor}" stroke-width="5" stroke-linecap="round"/>
-      <ellipse cx="238" cy="98" rx="9" ry="14" fill="${targetColor}" opacity="0.85" filter="drop-shadow(0 0 6px ${targetGlow})"/>
-      <path d="M 185 130 A 25 25 0 0 0 160 108" fill="none" stroke="#10B981" stroke-width="2" stroke-dasharray="3 2"/>
-      <polygon points="156,112 163,107 165,114" fill="#10B981"/>
-      <text x="280" y="102" fill="#10B981" font-size="11" font-weight="800">ROTATOR CUFF</text>
-      <text x="280" y="117" fill="#64748B" font-size="9" font-weight="600">Neck Slack (Zero Shrug)</text>
+    // Infraspinatus & Teres Minor (Posterior Scapular Cuff)
+    muscleHighlights = `
+      <ellipse cx="68" cy="74" rx="8" ry="11" fill="${glowColor}" filter="drop-shadow(0 0 6px ${glowColor})" opacity="0.95" />
+      <ellipse cx="132" cy="74" rx="8" ry="11" fill="${glowColor}" filter="drop-shadow(0 0 6px ${glowColor})" opacity="0.95" />
+      <path d="M 60 74 Q 48 88 44 116" stroke="${glowColor}" stroke-width="3" fill="none" opacity="0.8" />
+      <path d="M 140 74 Q 152 88 156 116" stroke="${glowColor}" stroke-width="3" fill="none" opacity="0.8" />
     `;
   } else if (id === 'serratus-wall-slides') {
-    visualContent = `
-      <line x1="280" y1="20" x2="280" y2="205" stroke="${benchColor}" stroke-width="8" stroke-linecap="square"/>
-      <path d="M 175 90 Q 185 130 180 180" stroke="${bodyColor}" stroke-width="14" fill="none" stroke-linecap="round"/>
-      <circle cx="185" cy="50" r="14" fill="#1E293B" stroke="${bodyColor}" stroke-width="2.5"/>
-      <line x1="185" y1="64" x2="183" y2="82" stroke="${neckColor}" stroke-width="5" stroke-linecap="round"/>
-      <path d="M 194 95 Q 212 110 206 135" stroke="#14B8A6" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.9" filter="drop-shadow(0 0 6px rgba(20,184,166,0.6))"/>
-      <line x1="192" y1="108" x2="218" y2="114" stroke="#14B8A6" stroke-width="3"/>
-      <line x1="190" y1="120" x2="214" y2="126" stroke="#14B8A6" stroke-width="3"/>
-      <line x1="186" y1="88" x2="235" y2="92" stroke="${bodyColor}" stroke-width="6" stroke-linecap="round"/>
-      <line x1="235" y1="92" x2="278" y2="72" stroke="${bodyColor}" stroke-width="6" stroke-linecap="round"/>
-      <line x1="288" y1="110" x2="288" y2="60" stroke="#14B8A6" stroke-width="3"/>
-      <polygon points="288,52 283,62 293,62" fill="#14B8A6"/>
-      <text x="60" y="112" fill="#14B8A6" font-size="11" font-weight="800">SERRATUS WRAPPERS</text>
-      <text x="60" y="127" fill="#64748B" font-size="9" font-weight="600">Ribs Wide • Neck Down</text>
+    // Serratus Anterior (Rib Wrappers)
+    muscleHighlights = `
+      <path d="M 68 94 L 84 98 M 67 103 L 86 107 M 67 112 L 84 116 M 68 121 L 82 124" stroke="${glowColor}" stroke-width="3.5" stroke-linecap="round" filter="drop-shadow(0 0 6px ${glowColor})" />
+      <path d="M 132 94 L 116 98 M 133 103 L 114 107 M 133 112 L 116 116 M 132 121 L 118 124" stroke="${glowColor}" stroke-width="3.5" stroke-linecap="round" filter="drop-shadow(0 0 6px ${glowColor})" />
     `;
   } else if (id === 'incline-prone-y') {
-    visualContent = `
-      <line x1="100" y1="180" x2="220" y2="90" stroke="${benchColor}" stroke-width="9" stroke-linecap="round"/>
-      <line x1="130" y1="160" x2="215" y2="95" stroke="${bodyColor}" stroke-width="14" stroke-linecap="round"/>
-      <circle cx="236" cy="80" r="13" fill="#1E293B" stroke="${bodyColor}" stroke-width="2.5"/>
-      <line x1="220" y1="90" x2="230" y2="84" stroke="${neckColor}" stroke-width="5"/>
-      <path d="M 185 108 L 198 120 L 175 125" stroke="#10B981" stroke-width="5" fill="none" opacity="0.9" filter="drop-shadow(0 0 6px ${targetGlow})"/>
-      <line x1="205" y1="96" x2="280" y2="48" stroke="#10B981" stroke-width="5" stroke-linecap="round"/>
-      <circle cx="280" cy="48" r="4" fill="#10B981"/>
-      <polygon points="282,38 276,46 287,44" fill="#10B981"/>
-      <text x="50" y="70" fill="#10B981" font-size="11" font-weight="800">LOWER TRAP PULL</text>
-      <text x="50" y="85" fill="#64748B" font-size="9" font-weight="600">Chest Glued • Zero Upper Shrug</text>
+    // Lower Trapezius (Depression Wedge in mid/lower thoracic)
+    muscleHighlights = `
+      <polygon points="82,78 118,78 100,120" fill="${glowColor}" filter="drop-shadow(0 0 7px ${glowColor})" opacity="0.9" />
+      <path d="M 66 66 L 40 40 M 134 66 L 160 40" stroke="${glowColor}" stroke-width="3" stroke-linecap="round" opacity="0.75" />
     `;
   } else if (id === 'chest-supported-row') {
-    visualContent = `
-      <line x1="200" y1="65" x2="200" y2="160" stroke="${benchColor}" stroke-width="10" stroke-linecap="round"/>
-      <line x1="140" y1="165" x2="195" y2="165" stroke="${benchColor}" stroke-width="6"/>
-      <path d="M 180 85 L 180 155" stroke="${bodyColor}" stroke-width="15" stroke-linecap="round"/>
-      <circle cx="178" cy="48" r="14" fill="#1E293B" stroke="${bodyColor}" stroke-width="2.5"/>
-      <line x1="178" y1="62" x2="178" y2="78" stroke="${neckColor}" stroke-width="5"/>
-      <ellipse cx="170" cy="115" rx="8" ry="22" fill="${targetColor}" opacity="0.85" filter="drop-shadow(0 0 6px ${targetGlow})"/>
-      <line x1="180" y1="88" x2="135" y2="108" stroke="${bodyColor}" stroke-width="6" stroke-linecap="round"/>
-      <line x1="135" y1="108" x2="230" y2="115" stroke="#38BDF8" stroke-width="4" stroke-dasharray="3 2"/>
-      <circle cx="230" cy="115" r="5" fill="#38BDF8"/>
-      <line x1="135" y1="75" x2="135" y2="145" stroke="#F59E0B" stroke-width="1.5" stroke-dasharray="2 2"/>
-      <text x="120" y="68" fill="#F59E0B" font-size="9" font-weight="700">ROM STOP (Torso Line)</text>
-      <text x="250" y="90" fill="#10B981" font-size="11" font-weight="800">LATS &amp; RHOMBOIDS</text>
-      <text x="250" y="105" fill="#64748B" font-size="9" font-weight="600">Zero Neck Extension</text>
+    // Lats & Rhomboids (Mid-Back Wing Blades)
+    muscleHighlights = `
+      <path d="M 68 84 Q 84 92 84 135 L 72 126 Z" fill="${glowColor}" filter="drop-shadow(0 0 6px ${glowColor})" opacity="0.9" />
+      <path d="M 132 84 Q 116 92 116 135 L 128 126 Z" fill="${glowColor}" filter="drop-shadow(0 0 6px ${glowColor})" opacity="0.9" />
+      <rect x="88" y="86" width="24" height="28" rx="4" fill="${glowColor}" opacity="0.75" />
     `;
   } else if (id === 'dual-cable-high-low-row') {
-    visualContent = `
-      <circle cx="320" cy="45" r="7" fill="#38BDF8"/>
-      <line x1="320" y1="45" x2="225" y2="112" stroke="#38BDF8" stroke-width="2.5" stroke-dasharray="4 2"/>
-      <line x1="160" y1="100" x2="150" y2="175" stroke="${bodyColor}" stroke-width="14" stroke-linecap="round"/>
-      <circle cx="165" cy="58" r="14" fill="#1E293B" stroke="${bodyColor}" stroke-width="2.5"/>
-      <line x1="165" y1="72" x2="162" y2="92" stroke="${neckColor}" stroke-width="5"/>
-      <path d="M 152 110 Q 158 135 150 155" stroke="#10B981" stroke-width="9" fill="none" opacity="0.9" filter="drop-shadow(0 0 6px ${targetGlow})"/>
-      <line x1="160" y1="98" x2="195" y2="128" stroke="${bodyColor}" stroke-width="6" stroke-linecap="round"/>
-      <line x1="195" y1="128" x2="225" y2="112" stroke="${bodyColor}" stroke-width="5" stroke-linecap="round"/>
-      <polygon points="190,135 198,124 187,126" fill="#10B981"/>
-      <text x="50" y="95" fill="#10B981" font-size="11" font-weight="800">LOWER LATS BIAS</text>
-      <text x="50" y="110" fill="#64748B" font-size="9" font-weight="600">Pulls Down Away From Neck</text>
+    // Lower Lats & Scapular Depressors
+    muscleHighlights = `
+      <path d="M 70 96 Q 88 102 84 140 L 74 132 Z" fill="${glowColor}" filter="drop-shadow(0 0 6px ${glowColor})" opacity="0.95" />
+      <path d="M 130 96 Q 112 102 116 140 L 126 132 Z" fill="${glowColor}" filter="drop-shadow(0 0 6px ${glowColor})" opacity="0.95" />
     `;
   } else if (id === 'half-kneeling-landmine-press') {
-    visualContent = `
-      <circle cx="80" cy="180" r="8" fill="${benchColor}"/>
-      <line x1="80" y1="180" x2="270" y2="70" stroke="#94A3B8" stroke-width="5"/>
-      <circle cx="270" cy="70" r="12" fill="#F59E0B" opacity="0.9"/>
-      <path d="M 180 110 L 175 160 M 175 160 L 155 195 M 175 160 L 210 195" stroke="${bodyColor}" stroke-width="8" stroke-linecap="round"/>
-      <circle cx="185" cy="70" r="13" fill="#1E293B" stroke="${bodyColor}" stroke-width="2.5"/>
-      <line x1="185" y1="83" x2="182" y2="102" stroke="${neckColor}" stroke-width="5"/>
-      <ellipse cx="192" cy="108" rx="8" ry="12" fill="#10B981" opacity="0.85" filter="drop-shadow(0 0 6px ${targetGlow})"/>
-      <line x1="184" y1="102" x2="235" y2="88" stroke="${bodyColor}" stroke-width="6" stroke-linecap="round"/>
-      <line x1="235" y1="88" x2="265" y2="72" stroke="${bodyColor}" stroke-width="5" stroke-linecap="round"/>
-      <path d="M 230 140 A 60 60 0 0 0 260 90" stroke="#38BDF8" stroke-width="1.5" stroke-dasharray="3 2" fill="none"/>
-      <text x="270" y="130" fill="#38BDF8" font-size="9" font-weight="700">60° NATURAL ARC</text>
-      <text x="60" y="60" fill="#10B981" font-size="11" font-weight="800">SERRATUS + DELT</text>
-      <text x="60" y="75" fill="#64748B" font-size="9" font-weight="600">Zero Overhead Impingement</text>
+    // Serratus & Anterior Deltoid (Coral Accent)
+    muscleHighlights = `
+      <ellipse cx="64" cy="74" rx="8" ry="11" fill="${glowColor}" filter="drop-shadow(0 0 6px ${glowColor})" opacity="0.95" />
+      <path d="M 68 94 L 84 98 M 67 103 L 86 107 M 67 112 L 84 116" stroke="${glowColor}" stroke-width="3.5" stroke-linecap="round" filter="drop-shadow(0 0 6px ${glowColor})" />
     `;
   } else if (id === 'dual-cable-incline-press') {
-    visualContent = `
-      <line x1="110" y1="165" x2="230" y2="95" stroke="${benchColor}" stroke-width="9" stroke-linecap="round"/>
-      <line x1="150" y1="140" x2="225" y2="98" stroke="${bodyColor}" stroke-width="14" stroke-linecap="round"/>
-      <circle cx="242" cy="85" r="13" fill="#1E293B" stroke="${bodyColor}" stroke-width="2.5"/>
-      <ellipse cx="215" cy="100" rx="10" ry="14" fill="#10B981" opacity="0.85" filter="drop-shadow(0 0 6px ${targetGlow})"/>
-      <circle cx="80" cy="130" r="5" fill="#38BDF8"/>
-      <line x1="80" y1="130" x2="190" y2="95" stroke="#38BDF8" stroke-width="2" stroke-dasharray="3 2"/>
-      <line x1="210" y1="98" x2="230" y2="52" stroke="${bodyColor}" stroke-width="5" stroke-linecap="round"/>
-      <text x="250" y="60" fill="#10B981" font-size="11" font-weight="800">CHEST &amp; SERRATUS</text>
-      <text x="250" y="75" fill="#64748B" font-size="9" font-weight="600">Elbows Forward • Safe Labrum</text>
+    // Pectorals & Front Delts (Coral Accent)
+    muscleHighlights = `
+      <path d="M 72 70 Q 98 72 98 94 Q 72 96 68 76 Z" fill="${glowColor}" filter="drop-shadow(0 0 6px ${glowColor})" opacity="0.9" />
+      <path d="M 128 70 Q 102 72 102 94 Q 128 96 132 76 Z" fill="${glowColor}" filter="drop-shadow(0 0 6px ${glowColor})" opacity="0.9" />
+      <ellipse cx="60" cy="74" rx="7" ry="9" fill="${glowColor}" opacity="0.85" />
+      <ellipse cx="140" cy="74" rx="7" ry="9" fill="${glowColor}" opacity="0.85" />
     `;
   } else if (id === 'sled-push-backward-drag') {
-    visualContent = `
-      <line x1="30" y1="185" x2="370" y2="185" stroke="#10B981" stroke-width="3" stroke-dasharray="6 3"/>
-      <rect x="250" y="165" width="80" height="15" rx="3" fill="#334155"/>
-      <line x1="265" y1="170" x2="265" y2="85" stroke="#475569" stroke-width="6"/>
-      <line x1="295" y1="170" x2="295" y2="85" stroke="#475569" stroke-width="6"/>
-      <rect x="255" y="130" width="70" height="25" rx="4" fill="#F59E0B" opacity="0.8"/>
-      <line x1="140" y1="165" x2="185" y2="115" stroke="${bodyColor}" stroke-width="12" stroke-linecap="round"/>
-      <circle cx="198" cy="100" r="13" fill="#1E293B" stroke="${bodyColor}" stroke-width="2.5"/>
-      <line x1="190" y1="110" x2="265" y2="105" stroke="${bodyColor}" stroke-width="5" stroke-linecap="round"/>
-      <path d="M 140 165 L 110 185 M 150 150 L 165 185" stroke="#F59E0B" stroke-width="7" stroke-linecap="round" filter="drop-shadow(0 0 6px rgba(245,158,11,0.5))"/>
-      <text x="40" y="65" fill="#F59E0B" font-size="11" font-weight="800">ZERO SPINAL COMPRESSION</text>
-      <text x="40" y="80" fill="#10B981" font-size="9" font-weight="700">100% Quad &amp; Glute Output</text>
+    // Quads, Glutes & Calves
+    muscleHighlights = `
+      <rect x="74" y="146" width="20" height="42" rx="6" fill="${glowColor}" filter="drop-shadow(0 0 6px ${glowColor})" opacity="0.9" />
+      <rect x="106" y="146" width="20" height="42" rx="6" fill="${glowColor}" filter="drop-shadow(0 0 6px ${glowColor})" opacity="0.9" />
+      <path d="M 76 128 Q 100 136 124 128 L 122 148 Q 100 152 78 148 Z" fill="${glowColor}" opacity="0.8" />
     `;
   } else if (id === 'db-goblet-squat') {
-    visualContent = `
-      <line x1="60" y1="195" x2="340" y2="195" stroke="${benchColor}" stroke-width="2"/>
-      <path d="M 195 95 L 195 140" stroke="${bodyColor}" stroke-width="14" stroke-linecap="round"/>
-      <circle cx="195" cy="58" r="14" fill="#1E293B" stroke="${bodyColor}" stroke-width="2.5"/>
-      <line x1="195" y1="72" x2="195" y2="88" stroke="${neckColor}" stroke-width="5"/>
-      <rect x="202" y="90" width="16" height="24" rx="4" fill="#38BDF8" stroke="#FFFFFF" stroke-width="1"/>
-      <path d="M 195 140 L 165 160 L 175 195 M 195 140 L 225 160 L 215 195" stroke="#F59E0B" stroke-width="8" stroke-linecap="round" filter="drop-shadow(0 0 6px rgba(245,158,11,0.5))"/>
-      <text x="245" y="85" fill="#10B981" font-size="11" font-weight="800">FRONT-LOADED CORE</text>
-      <text x="245" y="100" fill="#64748B" font-size="9" font-weight="600">Zero Barbell on Neck</text>
+    // Quads, Glutes & Anterior Core
+    muscleHighlights = `
+      <rect x="74" y="146" width="20" height="42" rx="6" fill="${glowColor}" filter="drop-shadow(0 0 6px ${glowColor})" opacity="0.9" />
+      <rect x="106" y="146" width="20" height="42" rx="6" fill="${glowColor}" filter="drop-shadow(0 0 6px ${glowColor})" opacity="0.9" />
+      <rect x="88" y="90" width="24" height="42" rx="4" fill="#38BDF8" opacity="0.8" />
+    `;
+  } else if (id === 'recumbent-bike-hiit') {
+    // Cardio Core & Quads
+    muscleHighlights = `
+      <rect x="74" y="146" width="20" height="42" rx="6" fill="${glowColor}" opacity="0.85" />
+      <rect x="106" y="146" width="20" height="42" rx="6" fill="${glowColor}" opacity="0.85" />
+      <circle cx="100" cy="98" r="14" fill="#F43F5E" filter="drop-shadow(0 0 8px #F43F5E)" opacity="0.9" />
     `;
   } else {
-    visualContent = `
-      <line x1="60" y1="180" x2="340" y2="180" stroke="${benchColor}" stroke-width="4"/>
-      <circle cx="200" cy="65" r="14" fill="#1E293B" stroke="${bodyColor}" stroke-width="2.5"/>
-      <line x1="200" y1="80" x2="195" y2="135" stroke="${bodyColor}" stroke-width="12" stroke-linecap="round"/>
-      <path d="M 80 120 Q 140 70 200 120 T 320 120" fill="none" stroke="#10B981" stroke-width="3" stroke-dasharray="4 2" opacity="0.8" filter="drop-shadow(0 0 6px ${targetGlow})"/>
-      <text x="140" y="45" fill="#10B981" font-size="11" font-weight="800">AEROBIC FLUSH</text>
-      <text x="140" y="60" fill="#64748B" font-size="9" font-weight="600">Spine Supported • Natural Gait</text>
+    // Posterior chain & calves
+    muscleHighlights = `
+      <rect x="74" y="152" width="20" height="38" rx="6" fill="${glowColor}" opacity="0.85" />
+      <rect x="106" y="152" width="20" height="38" rx="6" fill="${glowColor}" opacity="0.85" />
+      <path d="M 78 126 Q 100 134 122 126 L 120 150 Q 100 154 80 150 Z" fill="${glowColor}" opacity="0.85" />
     `;
   }
 
   return `
-    <svg viewBox="0 0 400 225" class="w-full h-full" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+    <svg viewBox="0 0 200 200" class="w-full h-full" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
       <defs>
-        <radialGradient id="grad-card-bg-${ex.id}" cx="50%" cy="50%" r="70%">
-          <stop offset="0%" stop-color="#14141E" />
-          <stop offset="100%" stop-color="#0A0A0E" />
+        <radialGradient id="grad-torso-${ex.id}" cx="50%" cy="40%" r="65%">
+          <stop offset="0%" stop-color="#1E293B" />
+          <stop offset="100%" stop-color="#0E1726" />
         </radialGradient>
       </defs>
-      <rect width="400" height="225" fill="url(#grad-card-bg-${ex.id})" />
-      <line x1="0" y1="112.5" x2="400" y2="112.5" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
-      <line x1="200" y1="0" x2="200" y2="225" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
-      ${visualContent}
+
+      <!-- Silhouette Base (Matte Slate #334155 / #1E293B on #0A0A0C) -->
+      <!-- Head -->
+      <circle cx="100" cy="34" r="16" fill="url(#grad-torso-${ex.id})" stroke="#334155" stroke-width="1.5" />
+
+      <!-- Upper Arms -->
+      <path d="M 64 68 C 50 78 44 98 42 128" fill="none" stroke="#1E293B" stroke-width="12" stroke-linecap="round" />
+      <path d="M 136 68 C 150 78 156 98 158 128" fill="none" stroke="#1E293B" stroke-width="12" stroke-linecap="round" />
+
+      <!-- Forearms -->
+      <path d="M 42 128 C 42 142 50 162 60 172" fill="none" stroke="#1E293B" stroke-width="9" stroke-linecap="round" />
+      <path d="M 158 128 C 158 142 150 162 140 172" fill="none" stroke="#1E293B" stroke-width="9" stroke-linecap="round" />
+
+      <!-- Torso Base -->
+      <path d="M 64 68 C 64 60 76 56 100 56 C 124 56 136 60 136 68 L 138 128 C 138 140 128 155 100 155 C 72 155 62 140 62 128 Z" fill="url(#grad-torso-${ex.id})" stroke="#334155" stroke-width="1.5" />
+
+      <!-- Legs Base -->
+      <path d="M 74 148 L 74 194 M 126 148 L 126 194" stroke="#1E293B" stroke-width="16" stroke-linecap="round" />
+
+      <!-- Guarded / Quiet Zones (Offloaded: Cervical C1-C7 & Upper Traps with ✕) -->
+      <line x1="100" y1="46" x2="100" y2="58" stroke="#EF4444" stroke-width="4" stroke-linecap="round" stroke-dasharray="2 2" opacity="0.85" />
+      <text x="100" y="55" fill="#EF4444" font-size="7" font-weight="900" text-anchor="middle">✕</text>
+
+      <path d="M 76 58 Q 88 56 100 58 Q 112 56 124 58" fill="none" stroke="#EF4444" stroke-width="2" stroke-dasharray="3 2" opacity="0.85" />
+      <text x="82" y="54" fill="#EF4444" font-size="7" font-weight="900">✕</text>
+      <text x="114" y="54" fill="#EF4444" font-size="7" font-weight="900">✕</text>
+
+      <!-- Active Target Muscle Highlights -->
+      ${muscleHighlights}
     </svg>
   `;
+}
+
+function renderExerciseVisualSvg(ex) {
+  return renderAnatomicalMuscleMapSvg(ex);
 }
 
 function renderCrossGatesLibrary() {
@@ -1751,30 +1947,86 @@ function renderCrossGatesLibrary() {
         : '';
 
     card.innerHTML = `
-      <!-- Dedicated 16:9 Visual Demonstration Container -->
+      <!-- High-End Two-Column Header: Vector Anatomical Muscle Map & Live Tempo HUD -->
       <div class="exercise-visual-container">
-        ${renderExerciseVisualSvg(ex)}
-        <div class="absolute top-2.5 left-2.5 flex items-center gap-1.5 pointer-events-none">
-          <span class="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm backdrop-blur-sm">
-            Target: ${escapeHtml(ex.targetMuscles || 'Primary Target')}
-          </span>
+        <!-- Left Column: Vector Anatomical Muscle Map -->
+        <div class="muscle-map-col">
+          ${renderAnatomicalMuscleMapSvg(ex)}
+          <div class="absolute top-2.5 right-2.5 pointer-events-none">
+            <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-500/25 text-emerald-300 border border-emerald-500/50 backdrop-blur-md shadow-sm">
+              ✓ Neck Safe
+            </span>
+          </div>
+          <div class="absolute bottom-2 left-2 right-2 flex items-center justify-between pointer-events-none">
+            <span class="px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider bg-black/80 text-emerald-400 border border-emerald-500/30 backdrop-blur-sm truncate max-w-[105px]">
+              ${escapeHtml(ex.targetMuscles.split('(')[0].trim())}
+            </span>
+            <span class="px-1.5 py-0.5 rounded-md text-[8px] font-bold uppercase tracking-wider bg-rose-950/80 text-rose-300 border border-rose-500/40">
+              ✕ Traps Off
+            </span>
+          </div>
         </div>
-        <div class="absolute top-2.5 right-2.5 flex items-center gap-1.5 pointer-events-none">
-          <span class="px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-slate-900/80 text-slate-400 border border-white/10 backdrop-blur-sm">
-            Neck: Zero Strain
-          </span>
+
+        <!-- Right Column: Live Tempo & Rep Pacer HUD -->
+        <div class="tempo-hud-col">
+          <div>
+            <div class="flex items-center justify-between gap-1">
+              <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Tempo HUD</span>
+              <span id="repBadge-${ex.id}" class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-white/10 text-slate-300">Rep 0</span>
+            </div>
+            <p class="text-xs font-black text-white tracking-tight mt-0.5">${escapeHtml(ex.tempoLabel || '3s Lift • 2s Hold • 3s Lower')}</p>
+          </div>
+
+          <!-- Segmented Cadence Progress Bars -->
+          <div class="space-y-1.5 my-1.5">
+            <div class="flex items-center justify-between text-[9px] font-bold text-slate-400">
+              <span id="tempoPhaseName-${ex.id}">Phase: Ready</span>
+              <span id="tempoPhaseTime-${ex.id}">${ex.tempo?.liftSec || 2}s / ${ex.tempo?.holdSec || 2}s / ${ex.tempo?.lowerSec || 3}s</span>
+            </div>
+            <div class="grid grid-cols-3 gap-1">
+              <div>
+                <div class="cadence-bar-track">
+                  <div id="cadenceFillLift-${ex.id}" class="cadence-bar-fill cadence-phase-lift"></div>
+                </div>
+                <span class="text-[8px] font-extrabold uppercase text-slate-500 block text-center mt-0.5">Lift (${ex.tempo?.liftSec || 2}s)</span>
+              </div>
+              <div>
+                <div class="cadence-bar-track">
+                  <div id="cadenceFillHold-${ex.id}" class="cadence-bar-fill cadence-phase-hold"></div>
+                </div>
+                <span class="text-[8px] font-extrabold uppercase text-slate-500 block text-center mt-0.5">Hold (${ex.tempo?.holdSec || 2}s)</span>
+              </div>
+              <div>
+                <div class="cadence-bar-track">
+                  <div id="cadenceFillLower-${ex.id}" class="cadence-bar-fill cadence-phase-lower"></div>
+                </div>
+                <span class="text-[8px] font-extrabold uppercase text-slate-500 block text-center mt-0.5">Lower (${ex.tempo?.lowerSec || 3}s)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Interactive Start / Pause Set Button -->
+          <button
+            type="button"
+            class="tempo-pacer-btn w-full py-2 px-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[10px] font-black uppercase tracking-wider active:scale-95 transition flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/25 cursor-pointer"
+            data-action="toggle-pacer"
+            data-exercise-id="${ex.id}"
+          >
+            <span class="pacer-icon">▶</span>
+            <span class="pacer-label">Start Set</span>
+          </button>
         </div>
       </div>
 
       <!-- Exercise Header Info -->
-      <div class="flex items-start justify-between gap-3">
-        <div class="flex-1">
+      <div class="flex items-start justify-between gap-3 pt-0.5">
+        <div class="flex-1 min-w-0">
           <div class="flex flex-wrap items-center gap-1.5">
             <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400">${escapeHtml(ex.categoryLabel)}</span>
             ${yellowPill}
           </div>
-          <h4 class="text-base font-extrabold text-white tracking-tight mt-0.5">${escapeHtml(ex.name)}</h4>
-          <p class="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
+          <h4 class="text-base font-extrabold text-white tracking-tight mt-0.5 truncate">${escapeHtml(ex.name)}</h4>
+          <p class="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5 truncate">
             <span class="opacity-70">📍</span> ${escapeHtml(ex.setupEquipment || ex.equipment)}
           </p>
         </div>
@@ -1800,15 +2052,33 @@ function renderCrossGatesLibrary() {
         </button>
       </div>
 
-      <!-- Tab 1: Technique (3 Plain-English Action Cues) -->
+      <!-- Tab 1: Technique (Action Cues) -->
       <div class="exercise-pane pane-technique space-y-2">
-        <ul class="space-y-1.5 text-xs text-slate-200">
-          ${(ex.techniqueCues || [ex.clinicalCue]).map((cue, i) => `
-            <li class="flex items-start gap-2">
-              <span class="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">${i + 1}</span>
-              <span class="leading-relaxed">${escapeHtml(cue)}</span>
-            </li>
-          `).join('')}
+        <ul class="space-y-2 text-xs">
+          ${(ex.techniqueCues || [ex.clinicalCue]).map((cue, i) => {
+            let lead = '';
+            let rest = cue;
+            const match = cue.match(/^\*\*(.*?)\*\*:?\s*(.*)$/);
+            if (match) {
+              lead = match[1];
+              rest = match[2];
+            } else if (cue.includes(':')) {
+              const parts = cue.split(':');
+              lead = parts[0].trim();
+              rest = parts.slice(1).join(':').trim();
+            }
+            return `
+              <li class="flex items-start gap-2.5 leading-relaxed">
+                <span class="w-5 h-5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">
+                  ${i + 1}
+                </span>
+                <div class="text-slate-200">
+                  ${lead ? `<strong class="text-white font-black">${escapeHtml(lead)}:</strong> ` : ''}
+                  <span class="text-slate-300">${escapeHtml(rest)}</span>
+                </div>
+              </li>
+            `;
+          }).join('')}
         </ul>
       </div>
 
@@ -1852,6 +2122,11 @@ function renderCrossGatesLibrary() {
         card.querySelector('.pane-why')?.classList.toggle('hidden', target !== 'why');
         card.querySelector('.pane-setup')?.classList.toggle('hidden', target !== 'setup');
       });
+    });
+
+    // Interactive Rep Pacer Button
+    card.querySelector('.tempo-pacer-btn')?.addEventListener('click', () => {
+      toggleExerciseRepPacer(ex.id);
     });
 
     // Add to Workout Draft
